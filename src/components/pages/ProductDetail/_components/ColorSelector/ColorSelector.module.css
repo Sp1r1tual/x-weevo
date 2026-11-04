@@ -1,0 +1,36 @@
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.colorBtn {
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--border-color);
+  background-color: transparent;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.colorBtn:not(:disabled):hover {
+  border-color: var(--text-primary);
+}
+
+.colorBtn.selected {
+  border-color: var(--text-primary);
+  background-color: var(--text-primary);
+  color: #ffffff;
+}
+
+.colorBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f9f9f9;
+  border-color: #eaeaea;
+  color: #a0a0a0;
+}

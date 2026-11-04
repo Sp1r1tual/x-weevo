@@ -57,20 +57,6 @@
   gap: 16px;
 }
 
-.optionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-
-.optionLabel {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 .optionError {
   font-size: 0.8125rem;
   color: #dc2626;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
@@ -8,9 +8,9 @@ import { addToCartAction } from "@/actions/cart.actions";
 import { toggleFavoriteAction } from "@/actions/favorites.actions";
 import { Heart, ShoppingBag } from "lucide-react";
 
-import { Badge } from "@/components/ui/Badge/Badge";
 import { Button } from "@/components/ui/Button/Button";
 
+import { ColorSelector } from "../ColorSelector/ColorSelector";
 import { SizeSelector } from "../SizeSelector/SizeSelector";
 
 import { useAuthStore } from "@/store/useAuthStore";
@@ -19,9 +19,18 @@ import { useFavoritesStore } from "@/store/useFavoritesStore";
 import { useModalStore } from "@/store/useModalStore";
 
 import { unwrapActionResult } from "@/common/utils/action-result";
+import { getLocalizedField } from "@/common/utils/locale";
 import { isVariantInStock } from "@/common/utils/product";
 
 import styles from "./ProductActions.module.css";
+
+interface ProductVariant {
+  id: string;
+  size: string;
+  stock: number;
+  colorUk: string | null;
+  colorEn: string | null;
+}
 
 interface ProductActionsProps {
   product: {
@@ -32,16 +41,23 @@ interface ProductActionsProps {
     price: number;
     discountPrice: number | null;
     images: { url: string; altText: string | null }[];
-    variants: { id: string; size: string; stock: number }[];
+    variants: ProductVariant[];
   };
-  discountPercentage: number;
 }
 
-export const ProductActions = ({ product, discountPercentage }: ProductActionsProps) => {
+const getColorKey = (variant: ProductVariant) => variant.colorUk ?? "";
+
+export const ProductActions = ({ product }: ProductActionsProps) => {
   const t = useTranslations("ProductDetail");
   const tErr = useTranslations("Errors");
+  const locale = useLocale();
+
+  const firstAvailableVariant = product.variants.find(isVariantInStock);
+  const [selectedColor, setSelectedColor] = useState(
+    firstAvailableVariant ? getColorKey(firstAvailableVariant) : "",
+  );
   const [selectedSize, setSelectedSize] = useState<string | null>(
-    product.variants.find(isVariantInStock)?.size ?? null,
+    firstAvailableVariant?.size ?? null,
   );
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
@@ -52,7 +68,31 @@ export const ProductActions = ({ product, discountPercentage }: ProductActionsPr
   const { ids: favoriteIds, toggle: toggleFavoriteStore } = useFavoritesStore();
   const isFavorited = favoriteIds.includes(product.id);
 
-  const isOutOfStock = !product.variants.some(isVariantInStock);
+  const isOutOfStock = !firstAvailableVariant;
+
+  const colorVariants = product.variants.filter((v) => getColorKey(v) === selectedColor);
+  const colorKeys = [...new Set(product.variants.map(getColorKey))];
+  const hasColors = colorKeys.some(Boolean);
+
+  const colorOptions = colorKeys.map((key) => {
+    const variants = product.variants.filter((v) => getColorKey(v) === key);
+    return {
+      key,
+      label: getLocalizedField(variants[0], "color", locale) || key,
+      isAvailable: variants.some(isVariantInStock),
+    };
+  });
+
+  const handleSelectColor = (key: string) => {
+    setSelectedColor(key);
+
+    const variants = product.variants.filter((v) => getColorKey(v) === key);
+    const isSizeAvailable = variants.some((v) => v.size === selectedSize && isVariantInStock(v));
+
+    if (!isSizeAvailable) {
+      setSelectedSize(variants.find(isVariantInStock)?.size ?? null);
+    }
+  };
 
   const handleAddToCart = async () => {
     if (!selectedSize) {
@@ -66,7 +106,7 @@ export const ProductActions = ({ product, discountPercentage }: ProductActionsPr
     }
 
     setIsAddingToCart(true);
-    const variant = product.variants.find((v) => v.size === selectedSize);
+    const variant = colorVariants.find((v) => v.size === selectedSize);
     const tempCartItemId = `temp-${Date.now()}`;
     // addItem may merge into an existing row, so a failure has to restore the whole cart.
     const previousItems = useCartStore.getState().items;
@@ -89,8 +129,8 @@ export const ProductActions = ({ product, discountPercentage }: ProductActionsPr
         ? {
             id: variant.id,
             size: variant.size,
-            colorUk: null,
-            colorEn: null,
+            colorUk: variant.colorUk,
+            colorEn: variant.colorEn,
           }
         : null,
     });
@@ -136,16 +176,22 @@ export const ProductActions = ({ product, discountPercentage }: ProductActionsPr
 
   return (
     <>
-      <div className={styles.badges}>
-        {!isOutOfStock && discountPercentage > 0 && (
-          <Badge variant="sale" label={`-${discountPercentage}%`} />
-        )}
-        {isOutOfStock && <Badge variant="outOfStock" label={t("out-of-stock")} />}
-      </div>
+      {hasColors && (
+        <div className={styles.option}>
+          <span className={styles.optionLabel}>{t("color")}</span>
+          <ColorSelector
+            label={t("color")}
+            options={colorOptions}
+            selectedKey={selectedColor}
+            onSelect={handleSelectColor}
+          />
+        </div>
+      )}
 
-      <div className={styles.sizeSelector}>
+      <div className={styles.option}>
+        <span className={styles.optionLabel}>{t("size")}</span>
         <SizeSelector
-          variants={product.variants}
+          variants={colorVariants}
           selectedSize={selectedSize}
           onSelect={setSelectedSize}
         />

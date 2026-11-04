@@ -31,7 +31,13 @@ interface ProductDetailProps {
     discountPrice: number | null;
     isFeatured: boolean;
     images: { url: string; altText: string | null }[];
-    variants: { id: string; size: string; stock: number }[];
+    variants: {
+      id: string;
+      size: string;
+      stock: number;
+      colorUk: string | null;
+      colorEn: string | null;
+    }[];
     category: {
       slug: string;
       nameUk: string;
@@ -111,10 +117,7 @@ export const ProductDetail = async ({ product, locale }: ProductDetailProps) => 
             </div>
 
             <div className={styles.optionsSection}>
-              <div className={styles.optionHeader}>
-                <span className={styles.optionLabel}>{t("size")}</span>
-              </div>
-              <ProductActions product={product} discountPercentage={discountPercentage} />
+              <ProductActions product={product} />
             </div>
 
             <div className={styles.detailsSection}>
