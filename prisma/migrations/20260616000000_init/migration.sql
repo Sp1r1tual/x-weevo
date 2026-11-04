@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "UserRole" AS ENUM ('CUSTOMER', 'ADMIN');
 
@@ -11,11 +14,12 @@ CREATE TYPE "ShippingCarrier" AS ENUM ('NOVA_POSHTA', 'UKRPOSHTA', 'MEEST', 'COU
 CREATE TYPE "ItemStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
 
 -- CreateTable
-CREATE TABLE "profiles" (
+CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "name" VARCHAR(32),
     "email" VARCHAR(255),
-    "avatar_url" TEXT,
+    "email_verified" TIMESTAMP(3),
+    "image" TEXT,
     "phone" VARCHAR(20),
     "role" "UserRole" NOT NULL DEFAULT 'CUSTOMER',
     "isSubscribed" BOOLEAN NOT NULL DEFAULT false,
@@ -23,7 +27,42 @@ CREATE TABLE "profiles" (
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "profiles_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "accounts" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "provider" TEXT NOT NULL,
+    "provider_account_id" TEXT NOT NULL,
+    "refresh_token" TEXT,
+    "access_token" TEXT,
+    "expires_at" INTEGER,
+    "token_type" TEXT,
+    "scope" TEXT,
+    "id_token" TEXT,
+    "session_state" TEXT,
+
+    CONSTRAINT "accounts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "sessions" (
+    "id" TEXT NOT NULL,
+    "session_token" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "sessions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "verification_tokens" (
+    "identifier" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
@@ -58,8 +97,8 @@ CREATE TABLE "products" (
     "careInstructionsEn" TEXT,
     "measurementsUk" TEXT,
     "measurementsEn" TEXT,
-    "price" DECIMAL(10,2) NOT NULL,
-    "discountPrice" DECIMAL(10,2),
+    "price" DOUBLE PRECISION NOT NULL,
+    "discountPrice" DOUBLE PRECISION,
     "status" "ItemStatus" NOT NULL DEFAULT 'DRAFT',
     "seoTitleUk" TEXT,
     "seoTitleEn" TEXT,
@@ -80,9 +119,10 @@ CREATE TABLE "product_variants" (
     "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "size" TEXT NOT NULL,
-    "color" TEXT,
-    "stock" INTEGER NOT NULL DEFAULT 0,
+    "colorUk" TEXT,
+    "colorEn" TEXT,
     "sku" TEXT,
+    "stock" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -104,7 +144,7 @@ CREATE TABLE "product_images" (
 -- CreateTable
 CREATE TABLE "favorites" (
     "id" TEXT NOT NULL,
-    "profileId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -114,7 +154,7 @@ CREATE TABLE "favorites" (
 -- CreateTable
 CREATE TABLE "carts" (
     "id" TEXT NOT NULL,
-    "profileId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -137,7 +177,7 @@ CREATE TABLE "cart_items" (
 -- CreateTable
 CREATE TABLE "reviews" (
     "id" TEXT NOT NULL,
-    "profileId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "rating" INTEGER NOT NULL,
     "comment" TEXT,
@@ -150,9 +190,9 @@ CREATE TABLE "reviews" (
 -- CreateTable
 CREATE TABLE "orders" (
     "id" TEXT NOT NULL,
-    "profileId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "status" "OrderStatus" NOT NULL DEFAULT 'PENDING',
-    "totalAmount" DECIMAL(10,2) NOT NULL,
+    "totalAmount" DOUBLE PRECISION NOT NULL,
     "contactName" TEXT NOT NULL,
     "contactEmail" TEXT NOT NULL,
     "contactPhone" TEXT NOT NULL,
@@ -161,7 +201,7 @@ CREATE TABLE "orders" (
     "trackingNumber" TEXT,
     "note" TEXT,
     "promoCodeId" TEXT,
-    "discountAmount" DECIMAL(10,2),
+    "discountAmount" DOUBLE PRECISION,
     "paidAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -179,7 +219,7 @@ CREATE TABLE "order_items" (
     "productNameEn" TEXT NOT NULL,
     "productSize" TEXT,
     "productColor" TEXT,
-    "price" DECIMAL(10,2) NOT NULL,
+    "price" DOUBLE PRECISION NOT NULL,
     "quantity" INTEGER NOT NULL DEFAULT 1,
 
     CONSTRAINT "order_items_pkey" PRIMARY KEY ("id")
@@ -188,7 +228,7 @@ CREATE TABLE "order_items" (
 -- CreateTable
 CREATE TABLE "addresses" (
     "id" TEXT NOT NULL,
-    "profileId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "title" TEXT,
     "carrier" "ShippingCarrier" NOT NULL,
     "city" TEXT NOT NULL,
@@ -216,8 +256,8 @@ CREATE TABLE "promo_codes" (
     "id" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "discountPercentage" INTEGER,
-    "discountAmount" DECIMAL(10,2),
-    "minOrderAmount" DECIMAL(10,2),
+    "discountAmount" DOUBLE PRECISION,
+    "minOrderAmount" DOUBLE PRECISION,
     "usageLimit" INTEGER,
     "usageLimitPerUser" INTEGER NOT NULL DEFAULT 1,
     "usedCount" INTEGER NOT NULL DEFAULT 0,
@@ -233,7 +273,7 @@ CREATE TABLE "promo_codes" (
 CREATE TABLE "newsletter_subscribers" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "profileId" TEXT,
+    "userId" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -265,13 +305,25 @@ CREATE TABLE "_CrossSells" (
 );
 
 -- CreateIndex
-CREATE INDEX "profiles_created_at_idx" ON "profiles"("created_at");
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
-CREATE INDEX "profiles_role_idx" ON "profiles"("role");
+CREATE INDEX "users_created_at_idx" ON "users"("created_at");
 
 -- CreateIndex
-CREATE INDEX "profiles_deleted_at_idx" ON "profiles"("deleted_at");
+CREATE INDEX "users_role_idx" ON "users"("role");
+
+-- CreateIndex
+CREATE INDEX "users_deleted_at_idx" ON "users"("deleted_at");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "accounts_provider_provider_account_id_key" ON "accounts"("provider", "provider_account_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "sessions_session_token_key" ON "sessions"("session_token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "verification_tokens_identifier_token_key" ON "verification_tokens"("identifier", "token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "categories_slug_key" ON "categories"("slug");
@@ -313,16 +365,16 @@ CREATE INDEX "product_variants_productId_idx" ON "product_variants"("productId")
 CREATE INDEX "product_images_productId_idx" ON "product_images"("productId");
 
 -- CreateIndex
-CREATE INDEX "favorites_profileId_idx" ON "favorites"("profileId");
+CREATE INDEX "favorites_userId_idx" ON "favorites"("userId");
 
 -- CreateIndex
 CREATE INDEX "favorites_productId_idx" ON "favorites"("productId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "favorites_profileId_productId_key" ON "favorites"("profileId", "productId");
+CREATE UNIQUE INDEX "favorites_userId_productId_key" ON "favorites"("userId", "productId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "carts_profileId_key" ON "carts"("profileId");
+CREATE UNIQUE INDEX "carts_userId_key" ON "carts"("userId");
 
 -- CreateIndex
 CREATE INDEX "cart_items_cartId_idx" ON "cart_items"("cartId");
@@ -337,13 +389,13 @@ CREATE UNIQUE INDEX "cart_items_cartId_productId_variantId_key" ON "cart_items"(
 CREATE INDEX "reviews_productId_idx" ON "reviews"("productId");
 
 -- CreateIndex
-CREATE INDEX "reviews_profileId_idx" ON "reviews"("profileId");
+CREATE INDEX "reviews_userId_idx" ON "reviews"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "reviews_profileId_productId_key" ON "reviews"("profileId", "productId");
+CREATE UNIQUE INDEX "reviews_userId_productId_key" ON "reviews"("userId", "productId");
 
 -- CreateIndex
-CREATE INDEX "orders_profileId_idx" ON "orders"("profileId");
+CREATE INDEX "orders_userId_idx" ON "orders"("userId");
 
 -- CreateIndex
 CREATE INDEX "orders_status_idx" ON "orders"("status");
@@ -361,7 +413,7 @@ CREATE INDEX "order_items_orderId_idx" ON "order_items"("orderId");
 CREATE INDEX "order_items_productId_idx" ON "order_items"("productId");
 
 -- CreateIndex
-CREATE INDEX "addresses_profileId_idx" ON "addresses"("profileId");
+CREATE INDEX "addresses_userId_idx" ON "addresses"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "tags_name_key" ON "tags"("name");
@@ -382,7 +434,7 @@ CREATE INDEX "promo_codes_expiresAt_idx" ON "promo_codes"("expiresAt");
 CREATE UNIQUE INDEX "newsletter_subscribers_email_key" ON "newsletter_subscribers"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "newsletter_subscribers_profileId_key" ON "newsletter_subscribers"("profileId");
+CREATE UNIQUE INDEX "newsletter_subscribers_userId_key" ON "newsletter_subscribers"("userId");
 
 -- CreateIndex
 CREATE INDEX "_ProductToTag_B_index" ON "_ProductToTag"("B");
@@ -392,6 +444,12 @@ CREATE INDEX "_RelatedProducts_B_index" ON "_RelatedProducts"("B");
 
 -- CreateIndex
 CREATE INDEX "_CrossSells_B_index" ON "_CrossSells"("B");
+
+-- AddForeignKey
+ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "categories" ADD CONSTRAINT "categories_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -406,13 +464,13 @@ ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_productId_fkey" 
 ALTER TABLE "product_images" ADD CONSTRAINT "product_images_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "favorites" ADD CONSTRAINT "favorites_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "favorites" ADD CONSTRAINT "favorites_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "favorites" ADD CONSTRAINT "favorites_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "carts" ADD CONSTRAINT "carts_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "carts" ADD CONSTRAINT "carts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_cartId_fkey" FOREIGN KEY ("cartId") REFERENCES "carts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -424,13 +482,13 @@ ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_productId_fkey" FOREIGN KEY 
 ALTER TABLE "cart_items" ADD CONSTRAINT "cart_items_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "reviews" ADD CONSTRAINT "reviews_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "reviews" ADD CONSTRAINT "reviews_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "reviews" ADD CONSTRAINT "reviews_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "orders" ADD CONSTRAINT "orders_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "orders" ADD CONSTRAINT "orders_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "orders" ADD CONSTRAINT "orders_promoCodeId_fkey" FOREIGN KEY ("promoCodeId") REFERENCES "promo_codes"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -445,10 +503,10 @@ ALTER TABLE "order_items" ADD CONSTRAINT "order_items_productId_fkey" FOREIGN KE
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variants"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "addresses" ADD CONSTRAINT "addresses_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "addresses" ADD CONSTRAINT "addresses_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "newsletter_subscribers" ADD CONSTRAINT "newsletter_subscribers_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "profiles"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "newsletter_subscribers" ADD CONSTRAINT "newsletter_subscribers_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_ProductToTag" ADD CONSTRAINT "_ProductToTag_A_fkey" FOREIGN KEY ("A") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -467,3 +525,4 @@ ALTER TABLE "_CrossSells" ADD CONSTRAINT "_CrossSells_A_fkey" FOREIGN KEY ("A") 
 
 -- AddForeignKey
 ALTER TABLE "_CrossSells" ADD CONSTRAINT "_CrossSells_B_fkey" FOREIGN KEY ("B") REFERENCES "products"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
