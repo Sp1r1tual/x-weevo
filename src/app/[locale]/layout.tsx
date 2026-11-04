@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, getTranslations } from "next-intl/server";
+import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import NextTopLoader from "nextjs-toploader";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { getCart } from "@/db/cart";
 import { getFavoriteIds } from "@/db/favorites";
 import { AuthProvider } from "@/providers/AuthProvider";
+import { MotionProvider } from "@/providers/MotionProvider";
 import { SkeletonProvider } from "@/providers/SkeletonProvider";
 
 import { GlobalAuthModal } from "@/components/ui/Modal/GlobalAuthModal";
@@ -76,7 +77,10 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
     notFound();
   }
 
-  const [messages, initialUser] = await Promise.all([getMessages(), getCurrentUser()]);
+  // Static pages have no request headers, so the locale has to come from the route.
+  setRequestLocale(locale);
+
+  const [messages, initialUser] = await Promise.all([getMessages({ locale }), getCurrentUser()]);
 
   let initialCart: CartItem[] = [];
   let initialFavorites: string[] = [];
@@ -111,16 +115,18 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
           shadow="0 0 10px #f59e0b,0 0 5px #f59e0b"
         />
         <SessionProvider>
-          <NextIntlClientProvider messages={messages}>
+          <NextIntlClientProvider locale={locale} messages={messages}>
             <SkeletonProvider>
               <AuthProvider
                 initialUser={initialUser}
                 initialCart={initialCart}
                 initialFavorites={initialFavorites}
               >
-                {children}
-                <Modal />
-                <GlobalAuthModal />
+                <MotionProvider>
+                  {children}
+                  <Modal />
+                  <GlobalAuthModal />
+                </MotionProvider>
               </AuthProvider>
               <ToastContainer position="top-center" autoClose={3000} />
             </SkeletonProvider>

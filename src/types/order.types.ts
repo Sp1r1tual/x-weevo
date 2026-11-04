@@ -29,6 +29,7 @@ type OrderItemData = {
   productColor: string | null;
   price: number;
   quantity: number;
+  variant: { colorUk: string | null; colorEn: string | null } | null;
   product: {
     slug: string;
     images: { url: string; altText: string | null }[];

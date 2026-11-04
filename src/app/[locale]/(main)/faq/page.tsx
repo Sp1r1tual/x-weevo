@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { FaqPageClient } from "./_components/FaqPageClient/FaqPageClient";
 
@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: RouteProps) {
 
 export default async function FAQPage({ params }: RouteProps) {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "FAQ" });
 
   return (

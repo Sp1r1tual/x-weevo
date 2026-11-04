@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PolicyLayout } from "@/components/ui/PolicyLayout/PolicyLayout";
 
@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: RouteProps) {
 
 export default async function ShippingPage({ params }: RouteProps) {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "Shipping" });
 
   const sections = [

@@ -22,6 +22,7 @@ const NAV_ITEMS = [
 ];
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
+  const tA11y = useTranslations("A11y");
   const t = useTranslations("Admin.layout");
   const [isOpen, setIsOpen] = useState(false);
 
@@ -49,7 +50,11 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
           <LayoutDashboard size={20} />
           <span>{t("title")}</span>
         </div>
-        <button onClick={toggleMenu} className={styles.burgerButton} aria-label="Toggle menu">
+        <button
+          onClick={toggleMenu}
+          className={styles.burgerButton}
+          aria-label={tA11y("toggleMenu")}
+        >
           <Menu size={24} />
         </button>
       </header>

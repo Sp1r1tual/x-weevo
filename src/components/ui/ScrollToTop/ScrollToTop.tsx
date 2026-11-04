@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { ArrowUp } from "lucide-react";
@@ -7,6 +8,7 @@ import { ArrowUp } from "lucide-react";
 import styles from "./ScrollToTop.module.css";
 
 export const ScrollToTop = () => {
+  const tA11y = useTranslations("A11y");
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export const ScrollToTop = () => {
       <button
         className={`${styles.button} ${isVisible ? styles.visible : ""}`}
         onClick={handleClick}
-        aria-label="Scroll to top"
+        aria-label={tA11y("scrollToTop")}
       >
         <ArrowUp size={20} strokeWidth={2.5} />
       </button>

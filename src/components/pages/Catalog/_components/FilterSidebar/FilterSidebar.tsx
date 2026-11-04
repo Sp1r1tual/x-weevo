@@ -21,6 +21,7 @@ interface FilterSidebarProps {
 }
 
 export const FilterSidebar = ({ availableSizes, priceRange }: FilterSidebarProps) => {
+  const tA11y = useTranslations("A11y");
   const t = useTranslations("Catalog");
   const router = useRouter();
   const pathname = usePathname();
@@ -204,7 +205,7 @@ export const FilterSidebar = ({ availableSizes, priceRange }: FilterSidebarProps
             onMouseUp={handlePriceApply}
             onTouchEnd={handlePriceApply}
             className={styles.rangeInput}
-            aria-label="Min price"
+            aria-label={tA11y("minPrice")}
           />
           <input
             type="range"
@@ -215,7 +216,7 @@ export const FilterSidebar = ({ availableSizes, priceRange }: FilterSidebarProps
             onMouseUp={handlePriceApply}
             onTouchEnd={handlePriceApply}
             className={styles.rangeInput}
-            aria-label="Max price"
+            aria-label={tA11y("maxPrice")}
           />
         </div>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useTopLoader } from "nextjs-toploader";
 
@@ -15,6 +16,7 @@ interface PaginationProps {
 }
 
 export const Pagination = ({ currentPage, totalPages, className = "" }: PaginationProps) => {
+  const tA11y = useTranslations("A11y");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -53,12 +55,12 @@ export const Pagination = ({ currentPage, totalPages, className = "" }: Paginati
   };
 
   return (
-    <nav className={`${styles.pagination} ${className}`} aria-label="Pagination">
+    <nav className={`${styles.pagination} ${className}`} aria-label={tA11y("pagination")}>
       <button
         className={styles.navButton}
         disabled={currentPage === 1}
         onClick={() => handlePageChange(currentPage - 1)}
-        aria-label="Previous page"
+        aria-label={tA11y("previousPage")}
       >
         <ChevronLeft size={18} />
       </button>
@@ -93,7 +95,7 @@ export const Pagination = ({ currentPage, totalPages, className = "" }: Paginati
         className={styles.navButton}
         disabled={currentPage === totalPages}
         onClick={() => handlePageChange(currentPage + 1)}
-        aria-label="Next page"
+        aria-label={tA11y("nextPage")}
       >
         <ChevronRight size={18} />
       </button>

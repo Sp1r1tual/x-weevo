@@ -10,6 +10,17 @@
     border-radius 0.3s ease;
 }
 
+/* A bigger touch area without changing the size of the dot. */
+.dot {
+  position: relative;
+}
+
+.dot::after {
+  content: "";
+  position: absolute;
+  inset: -14px -4px;
+}
+
 .dot:hover {
   transform: scale(1.2);
 }

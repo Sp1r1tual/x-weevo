@@ -14,6 +14,7 @@ import { ORDER_STATUS_TRANSITIONS } from "@/common/constants/order";
 import { unwrapActionResult } from "@/common/utils/action-result";
 import { formatPrice } from "@/common/utils/format";
 import { getLocalizedField } from "@/common/utils/locale";
+import { getOrderItemColor } from "@/common/utils/product";
 
 import styles from "./AdminOrderDetail.module.css";
 
@@ -230,8 +231,8 @@ export const AdminOrderDetail = ({ order }: Props) => {
                         {item.productSize && (
                           <span className={styles.metaTag}>{item.productSize}</span>
                         )}
-                        {item.productColor && (
-                          <span className={styles.metaTag}>{item.productColor}</span>
+                        {getOrderItemColor(item, locale) && (
+                          <span className={styles.metaTag}>{getOrderItemColor(item, locale)}</span>
                         )}
                       </div>
                     </div>

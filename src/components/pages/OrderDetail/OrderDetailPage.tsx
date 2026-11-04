@@ -17,6 +17,7 @@ import { ConfirmChoiceModal } from "@/components/ui/Modal/ConfirmChoiceModal";
 import { SkeletonImage } from "@/components/ui/SkeletonImage/SkeletonImage";
 
 import { formatDate, formatPrice } from "@/common/utils/format";
+import { getOrderItemColor } from "@/common/utils/product";
 
 import { ContactFormData } from "@/types/ui.types";
 
@@ -159,8 +160,8 @@ export const OrderDetailPage = ({ order: initialOrder }: OrderDetailPageProps) =
                   <span className={styles.itemName}>{productName(item)}</span>
                   <div className={styles.itemMeta}>
                     {item.productSize && <span className={styles.metaTag}>{item.productSize}</span>}
-                    {item.productColor && (
-                      <span className={styles.metaTag}>{item.productColor}</span>
+                    {getOrderItemColor(item, locale) && (
+                      <span className={styles.metaTag}>{getOrderItemColor(item, locale)}</span>
                     )}
                     <span className={styles.metaTag}>× {item.quantity}</span>
                   </div>

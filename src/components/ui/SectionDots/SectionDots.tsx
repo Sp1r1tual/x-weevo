@@ -16,6 +16,7 @@ const SECTIONS = [
 const HIDE_OFFSET_PX = 350;
 
 export const SectionDots = () => {
+  const tA11y = useTranslations("A11y");
   const t = useTranslations("SectionDots");
   const [activeId, setActiveId] = useState<string>("hero");
   const [hideDots, setHideDots] = useState(false);
@@ -65,7 +66,7 @@ export const SectionDots = () => {
   return (
     <nav
       className={`${styles.nav} ${hideDots ? styles.hidden : ""}`}
-      aria-label="Section navigation"
+      aria-label={tA11y("sectionNavigation")}
     >
       {SECTIONS.map(({ id, key }) => {
         const label = t(key);

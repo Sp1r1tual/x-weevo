@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 import styles from "./SlideDots.module.css";
 
 interface SlideDotsProps {
@@ -17,6 +19,7 @@ export const SlideDots = ({
   variant = "pill",
   className,
 }: SlideDotsProps) => {
+  const tA11y = useTranslations("A11y");
   if (count <= 1) return null;
 
   const sizeClass = styles[size];
@@ -24,14 +27,15 @@ export const SlideDots = ({
   return (
     <div
       className={[styles.dots, styles[variant], sizeClass, className].filter(Boolean).join(" ")}
-      aria-label="Slide indicators"
+      role="group"
+      aria-label={tA11y("slideIndicators")}
     >
       {Array.from({ length: count }, (_, index) => (
         <button
           key={index}
           className={`${styles.dot} ${index === activeIndex ? styles.dotActive : ""}`}
           onClick={() => onDotClick?.(index)}
-          aria-label={`Slide ${index + 1}`}
+          aria-label={tA11y("slide", { index: index + 1 })}
           aria-current={index === activeIndex ? "true" : undefined}
         />
       ))}

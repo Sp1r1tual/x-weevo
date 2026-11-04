@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useSwipe } from "@/hooks/useSwipe";
@@ -14,6 +15,7 @@ interface ImageGalleryProps {
 }
 
 export const ImageGallery = ({ images }: ImageGalleryProps) => {
+  const tA11y = useTranslations("A11y");
   const [activeIndex, setActiveIndex] = useState(0);
   const thumbnailsRef = useRef<HTMLDivElement>(null);
 
@@ -100,7 +102,7 @@ export const ImageGallery = ({ images }: ImageGalleryProps) => {
             <button
               className={`${styles.arrowBtn} ${styles.arrowPrev}`}
               onClick={goPrev}
-              aria-label="Previous image"
+              aria-label={tA11y("previousImage")}
             >
               <svg
                 width="20"
@@ -118,7 +120,7 @@ export const ImageGallery = ({ images }: ImageGalleryProps) => {
             <button
               className={`${styles.arrowBtn} ${styles.arrowNext}`}
               onClick={goNext}
-              aria-label="Next image"
+              aria-label={tA11y("nextImage")}
             >
               <svg
                 width="20"

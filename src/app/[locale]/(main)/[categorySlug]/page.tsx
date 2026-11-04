@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { findAllDescendantCategoryIds, findCategoryBySlug } from "@/db/category";
@@ -88,10 +89,9 @@ export default async function CategoryRoute({ params, searchParams }: CategoryRo
 
   const title = getLocalizedField(category, "name", locale);
   const description = getLocalizedField(category, "seoDescription", locale);
+  const tDetail = await getTranslations({ locale, namespace: "ProductDetail" });
 
-  const breadcrumbs: { label: string; href?: string }[] = [
-    { label: locale === "en" ? "Home" : "Головна", href: "/" },
-  ];
+  const breadcrumbs: { label: string; href?: string }[] = [{ label: tDetail("home"), href: "/" }];
 
   if (category.parent) {
     breadcrumbs.push({

@@ -16,9 +16,7 @@ export const PhoneSection = () => {
     <div className={styles.phoneSection}>
       <span className={styles.label}>{t("phoneLabel")}</span>{" "}
       <span className={styles.phoneValueWrapper}>
-        <span className={styles.phoneValue}>
-          {user.phone ? user.phone : t("phoneNotSet") || "Номер не встановлено"}
-        </span>
+        <span className={styles.phoneValue}>{user.phone ? user.phone : t("phoneNotSet")}</span>
       </span>
     </div>
   );

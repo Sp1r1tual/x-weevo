@@ -44,8 +44,7 @@ export const AuthModal = ({ isOpen, onClose, redirectPath }: AuthModalProps) => 
       await signIn("google", { callbackUrl });
     } catch (error) {
       sessionStorage.removeItem("pendingLogin");
-      const message = error instanceof Error ? error.message : "Failed to sign in with Google";
-      toast.error(message);
+      toast.error(t("errorMessage"));
       console.error(error);
     }
   };
@@ -84,7 +83,6 @@ export const AuthModal = ({ isOpen, onClose, redirectPath }: AuthModalProps) => 
           fullWidth
           icon={<Image src={googleLogo} alt="Google" width={20} height={20} />}
           onClick={handleGoogleSignIn}
-          aria-label="Sign in with Google"
         >
           {t("googleButton")}
         </Button>

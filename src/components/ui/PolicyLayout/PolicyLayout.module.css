@@ -130,7 +130,7 @@
 
 .navButtonActive .navIndex {
   background: linear-gradient(135deg, #f59e0b, #fbbf24);
-  color: white;
+  color: #171717;
 }
 
 .navText {

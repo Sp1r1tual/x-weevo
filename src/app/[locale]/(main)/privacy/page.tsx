@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { PolicyLayout } from "@/components/ui/PolicyLayout/PolicyLayout";
 
@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: PrivacyRouteProps) {
 
 export default async function PrivacyPage({ params }: PrivacyRouteProps) {
   const { locale } = await params;
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "Privacy" });
 
   const sections = [

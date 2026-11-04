@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -38,6 +39,7 @@ export const Drawer = ({
   customButtons,
   children,
 }: DrawerProps) => {
+  const tA11y = useTranslations("A11y");
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const initialX = direction === "right" ? "100%" : "-100%";
@@ -107,7 +109,11 @@ export const Drawer = ({
                 {TitleIcon && <TitleIcon size={20} />}
                 {title && <span>{title}</span>}
               </div>
-              <button className={styles.drawerClose} onClick={onClose} aria-label="Close menu">
+              <button
+                className={styles.drawerClose}
+                onClick={onClose}
+                aria-label={tA11y("closeMenu")}
+              >
                 <X size={24} />
               </button>
             </div>

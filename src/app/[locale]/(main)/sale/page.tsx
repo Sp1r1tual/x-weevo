@@ -26,6 +26,7 @@ export default async function SaleRoute({ params, searchParams }: SaleRouteProps
   const sp = await searchParams;
 
   const t = await getTranslations({ locale, namespace: "Catalog" });
+  const tDetail = await getTranslations({ locale, namespace: "ProductDetail" });
 
   const page = typeof sp.page === "string" ? parseInt(sp.page, 10) : 1;
   const minPrice = typeof sp.minPrice === "string" ? parseInt(sp.minPrice, 10) : undefined;
@@ -53,7 +54,7 @@ export default async function SaleRoute({ params, searchParams }: SaleRouteProps
 
   const title = t("sale");
   const breadcrumbs: { label: string; href?: string }[] = [
-    { label: locale === "en" ? "Home" : "Головна", href: "/" },
+    { label: tDetail("home"), href: "/" },
     { label: title },
   ];
 

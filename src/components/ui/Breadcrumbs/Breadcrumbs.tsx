@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 import { Link } from "@/i18n/navigation";
 import { ChevronRight } from "lucide-react";
 
@@ -15,6 +17,7 @@ interface BreadcrumbsProps {
 }
 
 export const Breadcrumbs = ({ items, className = "" }: BreadcrumbsProps) => {
+  const tA11y = useTranslations("A11y");
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -29,7 +32,7 @@ export const Breadcrumbs = ({ items, className = "" }: BreadcrumbsProps) => {
   return (
     <>
       <JsonLd data={jsonLd} />
-      <nav aria-label="Breadcrumb" className={`${styles.breadcrumbs} ${className}`}>
+      <nav aria-label={tA11y("breadcrumb")} className={`${styles.breadcrumbs} ${className}`}>
         <ol className={styles.list}>
           {items.map((item, index) => {
             const isLast = index === items.length - 1;

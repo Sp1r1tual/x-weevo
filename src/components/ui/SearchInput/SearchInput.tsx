@@ -28,6 +28,7 @@ interface SuggestionProduct {
 }
 
 export const SearchInput = () => {
+  const tA11y = useTranslations("A11y");
   const router = useRouter();
   const tSearch = useTranslations("Search");
   const tNavbar = useTranslations("Navbar");
@@ -42,6 +43,7 @@ export const SearchInput = () => {
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
 
   const { register, handleSubmit, setValue, reset } = useForm<SearchFormData>({
     resolver: zodResolver(getSearchSchema(tSearch)),
@@ -51,21 +53,31 @@ export const SearchInput = () => {
 
   const fetchSuggestions = useCallback(
     async (q: string) => {
+      // A slower earlier response must not overwrite the results for the current text.
+      requestRef.current?.abort();
+
       if (q.length < 2) {
         setSuggestions([]);
         setIsOpen(false);
+        setIsLoading(false);
         return;
       }
+
+      const request = new AbortController();
+      requestRef.current = request;
+
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&locale=${locale}`);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&locale=${locale}`, {
+          signal: request.signal,
+        });
         const data = await res.json();
         setSuggestions(data.products ?? []);
         setIsOpen(true);
       } catch {
-        setSuggestions([]);
+        if (!request.signal.aborted) setSuggestions([]);
       } finally {
-        setIsLoading(false);
+        if (!request.signal.aborted) setIsLoading(false);
       }
     },
     [locale],
@@ -102,12 +114,16 @@ export const SearchInput = () => {
     setActiveIndex(-1);
 
     if (!val) {
+      requestRef.current?.abort();
+      setIsLoading(false);
       setSuggestions([]);
       setIsOpen(false);
     }
   };
 
   const handleClear = () => {
+    requestRef.current?.abort();
+    setIsLoading(false);
     setQuery("");
     reset({ query: "" });
     setSuggestions([]);
@@ -151,7 +167,7 @@ export const SearchInput = () => {
           className={styles.searchInput}
           type="text"
           placeholder={tNavbar("searchPlaceholder")}
-          aria-label="Search"
+          aria-label={tA11y("search")}
           autoComplete="off"
           value={query}
           onChange={handleInputChange}
@@ -163,7 +179,7 @@ export const SearchInput = () => {
             type="button"
             className={styles.clearButton}
             onClick={handleClear}
-            aria-label="Clear search"
+            aria-label={tA11y("clearSearch")}
           >
             <X size={14} />
           </button>
@@ -171,7 +187,7 @@ export const SearchInput = () => {
         <button
           type="submit"
           className={styles.searchButton}
-          aria-label="Submit search"
+          aria-label={tA11y("submitSearch")}
           disabled={!query.trim() || isLoading}
         >
           {isLoading ? (

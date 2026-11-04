@@ -7,6 +7,18 @@
   animation: fadeUp 0.5s ease both;
 }
 
+.cardLink {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  border-radius: 16px;
+}
+
+.badges,
+.sizesOverlay {
+  pointer-events: none;
+}
+
 .card:nth-child(1) {
   animation-delay: 0ms;
 }

@@ -48,6 +48,7 @@ export const ProductCard = ({
   const primaryImage = product.images[0]?.url || "/placeholder.webp";
   const isOutOfStock = product.variants.every((v) => v.stock === 0);
 
+  const t = useTranslations("ProductCard");
   const tErr = useTranslations("Errors");
   const user = useAuthStore((s) => s.user);
   const openAuthModal = useModalStore((s) => s.openAuthModal);
@@ -61,10 +62,7 @@ export const ProductCard = ({
 
   const categoryName = getLocalizedField(product.category, "name", locale, "slug");
 
-  const handleFavorite = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const handleFavorite = async () => {
     if (!user) {
       openAuthModal();
       return;
@@ -79,32 +77,37 @@ export const ProductCard = ({
     }
   };
 
-  const handleShare = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleShare = async () => {
     const url = `${window.location.origin}/${locale}/product/${product.slug}`;
-    if (navigator.share) {
-      navigator.share({ title: name, url });
-    } else {
-      navigator.clipboard.writeText(url);
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: name, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success(t("linkCopied"));
+      }
+    } catch (error) {
+      // Closing the system share sheet also rejects, and that is not a failure.
+      if (!(error instanceof DOMException && error.name === "AbortError")) {
+        toast.error(t("shareError"));
+      }
     }
   };
 
   return (
-    <Link href={`/product/${product.slug}`} className={styles.card}>
+    <div className={styles.card}>
+      {/* A stretched link, because buttons cannot be nested inside an anchor. */}
+      <Link href={`/product/${product.slug}`} className={styles.cardLink} aria-label={name} />
+
       <div className={styles.imageContainer}>
         <div className={styles.badges}>
-          {isOutOfStock && (
-            <Badge
-              variant="outOfStock"
-              label={locale === "en" ? "Out of Stock" : "Немає в наявності"}
-            />
-          )}
+          {isOutOfStock && <Badge variant="outOfStock" label={t("outOfStock")} />}
           {!isOutOfStock && discountPercentage > 0 && (
             <Badge variant="sale" label={`-${discountPercentage}%`} />
           )}
           {!isOutOfStock && product.isFeatured && discountPercentage === 0 && (
-            <Badge variant="featured" label={locale === "en" ? "Featured" : "Топ"} />
+            <Badge variant="featured" label={t("featured")} />
           )}
         </div>
 
@@ -113,12 +116,12 @@ export const ProductCard = ({
             <button
               className={`${styles.actionBtn} ${favorited ? styles.favorited : ""}`}
               onClick={handleFavorite}
-              aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+              aria-label={favorited ? t("removeFromFavorites") : t("addToFavorites")}
             >
               <Heart size={15} fill={favorited ? "currentColor" : "none"} />
             </button>
           )}
-          <button className={styles.actionBtn} onClick={handleShare} aria-label="Share product">
+          <button className={styles.actionBtn} onClick={handleShare} aria-label={t("share")}>
             <Share2 size={15} />
           </button>
         </div>
@@ -153,6 +156,6 @@ export const ProductCard = ({
         </h3>
         <PriceDisplay price={product.price} discountPrice={product.discountPrice} size="sm" />
       </div>
-    </Link>
+    </div>
   );
 };

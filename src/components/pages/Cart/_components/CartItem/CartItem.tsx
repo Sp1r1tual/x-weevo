@@ -25,6 +25,7 @@ interface CartItemProps {
 }
 
 export const CartItem = ({ item, locale }: CartItemProps) => {
+  const tA11y = useTranslations("A11y");
   const t = useTranslations("Cart");
   const tErr = useTranslations("Errors");
   const { removeItem, updateQuantity } = useCartStore();
@@ -119,7 +120,7 @@ export const CartItem = ({ item, locale }: CartItemProps) => {
               className={styles.stepperBtn}
               onClick={() => handleQuantityChange(localQty - 1)}
               disabled={localQty <= 1 || isPendingQty}
-              aria-label="Decrease quantity"
+              aria-label={tA11y("decreaseQuantity")}
             >
               <Minus size={14} />
             </button>
@@ -128,7 +129,7 @@ export const CartItem = ({ item, locale }: CartItemProps) => {
               className={styles.stepperBtn}
               onClick={() => handleQuantityChange(localQty + 1)}
               disabled={localQty >= 99 || isPendingQty}
-              aria-label="Increase quantity"
+              aria-label={tA11y("increaseQuantity")}
             >
               <Plus size={14} />
             </button>

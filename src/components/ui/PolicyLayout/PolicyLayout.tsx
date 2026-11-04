@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { motion } from "framer-motion";
@@ -22,6 +23,7 @@ interface PolicyLayoutProps {
 }
 
 export const PolicyLayout = ({ title, description, sections }: PolicyLayoutProps) => {
+  const tCommon = useTranslations("Common");
   const [activeSection, setActiveSection] = useState<string>("");
 
   useEffect(() => {
@@ -65,8 +67,8 @@ export const PolicyLayout = ({ title, description, sections }: PolicyLayoutProps
         <header className={styles.header}>
           <motion.h1
             className={styles.title}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ y: -20 }}
+            animate={{ y: 0 }}
             transition={{ duration: 0.5 }}
           >
             {title}
@@ -74,8 +76,8 @@ export const PolicyLayout = ({ title, description, sections }: PolicyLayoutProps
           {description && (
             <motion.p
               className={styles.description}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ y: 10 }}
+              animate={{ y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
               {description}
@@ -86,7 +88,7 @@ export const PolicyLayout = ({ title, description, sections }: PolicyLayoutProps
         <div className={styles.mainContent}>
           <aside className={styles.sidebar}>
             <nav className={styles.nav}>
-              <span className={styles.navTitle}>Зміст</span>
+              <span className={styles.navTitle}>{tCommon("tableOfContents")}</span>
               <ul className={styles.navList}>
                 {sections.map((section, idx) => (
                   <li key={section.id} className={styles.navItem}>
@@ -105,14 +107,14 @@ export const PolicyLayout = ({ title, description, sections }: PolicyLayoutProps
             </nav>
           </aside>
 
-          <main className={styles.sectionsList}>
+          <div className={styles.sectionsList}>
             {sections.map((section, idx) => (
               <motion.section
                 key={section.id}
                 id={section.id}
                 className={styles.section}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ y: 20 }}
+                whileInView={{ y: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
                 transition={{ duration: 0.5 }}
               >
@@ -123,7 +125,7 @@ export const PolicyLayout = ({ title, description, sections }: PolicyLayoutProps
                 <div className={styles.sectionContent}>{section.content}</div>
               </motion.section>
             ))}
-          </main>
+          </div>
         </div>
       </div>
 

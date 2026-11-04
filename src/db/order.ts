@@ -23,6 +23,7 @@ const orderItemSelect = {
   productColor: true,
   price: true,
   quantity: true,
+  variant: { select: { colorUk: true, colorEn: true } },
   product: {
     select: {
       slug: true,

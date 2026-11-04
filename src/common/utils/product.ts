@@ -25,6 +25,18 @@ export function sortVariantsBySize<T extends { size: string }>(variants: T[]): T
   return [...variants].sort((a, b) => compareSizes(a.size, b.size));
 }
 
+/** The order stores one color text, so prefer the variant's translation while it still exists. */
+export function getOrderItemColor(
+  item: {
+    productColor: string | null;
+    variant: { colorUk: string | null; colorEn: string | null } | null;
+  },
+  locale: string,
+) {
+  const color = locale === "en" ? item.variant?.colorEn : item.variant?.colorUk;
+  return color || item.productColor;
+}
+
 export function isVariantInStock(variant: { stock: number }) {
   return variant.stock > 0;
 }

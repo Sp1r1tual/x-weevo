@@ -1,6 +1,7 @@
 {
   "Common": {
-    "back": "Назад"
+    "back": "Назад",
+    "tableOfContents": "Зміст"
   },
   "Layout": {
     "title": "X-Weevo | Магазин одягу",
@@ -721,5 +722,37 @@
     "catalog": "Перейти до каталогу",
     "digest": "ID помилки",
     "contact": "Якщо проблема не зникає, зв'яжіться з нами:"
+  },
+  "ProductCard": {
+    "outOfStock": "Немає в наявності",
+    "featured": "Топ",
+    "addToFavorites": "Додати в обране",
+    "removeFromFavorites": "Видалити з обраного",
+    "share": "Поділитися товаром",
+    "linkCopied": "Посилання скопійовано",
+    "shareError": "Не вдалося поділитися посиланням"
+  },
+  "A11y": {
+    "toggleMenu": "Перемкнути меню",
+    "decreaseQuantity": "Зменшити кількість",
+    "increaseQuantity": "Збільшити кількість",
+    "minPrice": "Мінімальна ціна",
+    "maxPrice": "Максимальна ціна",
+    "previousImage": "Попереднє зображення",
+    "nextImage": "Наступне зображення",
+    "breadcrumb": "Навігаційний ланцюжок",
+    "closeMenu": "Закрити меню",
+    "home": "X-Weevo — на головну",
+    "close": "Закрити",
+    "pagination": "Сторінки",
+    "previousPage": "Попередня сторінка",
+    "nextPage": "Наступна сторінка",
+    "scrollToTop": "Прокрутити вгору",
+    "search": "Пошук",
+    "clearSearch": "Очистити пошук",
+    "submitSearch": "Шукати",
+    "sectionNavigation": "Навігація по розділах",
+    "slideIndicators": "Перемикач слайдів",
+    "slide": "Слайд {index}"
   }
 }

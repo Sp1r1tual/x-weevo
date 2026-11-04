@@ -1,6 +1,7 @@
 {
   "Common": {
-    "back": "Back"
+    "back": "Back",
+    "tableOfContents": "Contents"
   },
   "Layout": {
     "title": "X-Weevo | Clothing Store",
@@ -721,5 +722,37 @@
     "catalog": "Go to Catalog",
     "digest": "Error ID",
     "contact": "If the problem persists, contact us:"
+  },
+  "ProductCard": {
+    "outOfStock": "Out of Stock",
+    "featured": "Featured",
+    "addToFavorites": "Add to favorites",
+    "removeFromFavorites": "Remove from favorites",
+    "share": "Share product",
+    "linkCopied": "Link copied",
+    "shareError": "Failed to share the link"
+  },
+  "A11y": {
+    "toggleMenu": "Toggle menu",
+    "decreaseQuantity": "Decrease quantity",
+    "increaseQuantity": "Increase quantity",
+    "minPrice": "Min price",
+    "maxPrice": "Max price",
+    "previousImage": "Previous image",
+    "nextImage": "Next image",
+    "breadcrumb": "Breadcrumb",
+    "closeMenu": "Close menu",
+    "home": "X-Weevo — home",
+    "close": "Close",
+    "pagination": "Pagination",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "scrollToTop": "Scroll to top",
+    "search": "Search",
+    "clearSearch": "Clear search",
+    "submitSearch": "Submit search",
+    "sectionNavigation": "Section navigation",
+    "slideIndicators": "Slide indicators",
+    "slide": "Slide {index}"
   }
 }
