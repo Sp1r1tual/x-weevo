@@ -6,6 +6,7 @@ export function getSeoAlternates(locale: string, path: string = "") {
     languages: {
       uk: `${BASE_URL}/uk${path}`,
       en: `${BASE_URL}/en${path}`,
+      "x-default": `${BASE_URL}/uk${path}`,
     },
   };
 }

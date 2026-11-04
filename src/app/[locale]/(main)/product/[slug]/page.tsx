@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { findProductBySlug } from "@/db/product";
@@ -9,6 +10,13 @@ import { BASE_URL } from "@/common/constants/env";
 import { getLocalizedField } from "@/common/utils/locale";
 import { isVariantInStock } from "@/common/utils/product";
 import { getSeoAlternates } from "@/common/utils/seo";
+
+const META_DESCRIPTION_LENGTH = 160;
+
+function getProductDescription(product: object, locale: string) {
+  const description = getLocalizedField(product, "seoDescription", locale, "description");
+  return description?.slice(0, META_DESCRIPTION_LENGTH);
+}
 
 interface ProductRouteProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -23,7 +31,7 @@ export async function generateMetadata({ params }: ProductRouteProps) {
   }
 
   const title = getLocalizedField(product, "seoTitle", locale, "name");
-  const description = getLocalizedField(product, "seoDescription", locale);
+  const description = getProductDescription(product, locale);
   const primaryImage = product.images[0]?.url;
 
   return {
@@ -54,13 +62,14 @@ export default async function ProductRoute({ params }: ProductRouteProps) {
     notFound();
   }
 
-  const title = getLocalizedField(product, "seoTitle", locale, "name");
-  const description = getLocalizedField(product, "seoDescription", locale);
+  const name = getLocalizedField(product, "name", locale);
+  const description = getProductDescription(product, locale);
+  const t = await getTranslations({ locale, namespace: "ProductDetail" });
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: title,
+    name,
     description: description || undefined,
     image: product.images.map((img) => img.url),
     url: `${BASE_URL}/${locale}/product/${product.slug}`,
@@ -75,9 +84,23 @@ export default async function ProductRoute({ params }: ProductRouteProps) {
     },
   };
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { name: t("home"), item: `${BASE_URL}/${locale}` },
+      {
+        name: getLocalizedField(product.category, "name", locale),
+        item: `${BASE_URL}/${locale}/${product.category.slug}`,
+      },
+      { name, item: `${BASE_URL}/${locale}/product/${product.slug}` },
+    ].map((entry, index) => ({ "@type": "ListItem", position: index + 1, ...entry })),
+  };
+
   return (
     <>
       <JsonLd data={jsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
       <ProductDetail product={product} locale={locale} />
     </>
   );
