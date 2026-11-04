@@ -113,6 +113,12 @@ yarn prisma:migrate
 yarn prisma:seed
 ```
 
+Optionally, fill the store with demo products (photos from [Unsplash](https://unsplash.com)):
+
+```bash
+yarn prisma:seed:demo
+```
+
 To access the admin panel at `/admin`, sign in once and then set your user's `role` to `ADMIN` in Prisma Studio.
 
 _Optional: Open Prisma Studio to view and edit your database via UI:_
@@ -135,18 +141,19 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Available Scripts
 
-| Command                | Description                                 |
-| :--------------------- | :------------------------------------------ |
-| `yarn dev`             | Start the development server                |
-| `yarn build`           | Create an optimized production build        |
-| `yarn start`           | Start the production server                 |
-| `yarn lint`            | Run ESLint to check for code issues         |
-| `yarn format`          | Format code using Prettier                  |
-| `yarn knip`            | Detect unused code, files, and dependencies |
-| `yarn prisma:migrate`  | Run Prisma migrations to update DB schema   |
-| `yarn prisma:generate` | Generate the Prisma client for type safety  |
-| `yarn prisma:seed`     | Seed the base categories                    |
-| `yarn prisma:studio`   | Open Prisma Studio database UI              |
+| Command                 | Description                                 |
+| :---------------------- | :------------------------------------------ |
+| `yarn dev`              | Start the development server                |
+| `yarn build`            | Create an optimized production build        |
+| `yarn start`            | Start the production server                 |
+| `yarn lint`             | Run ESLint to check for code issues         |
+| `yarn format`           | Format code using Prettier                  |
+| `yarn knip`             | Detect unused code, files, and dependencies |
+| `yarn prisma:migrate`   | Run Prisma migrations to update DB schema   |
+| `yarn prisma:generate`  | Generate the Prisma client for type safety  |
+| `yarn prisma:seed`      | Seed the base categories                    |
+| `yarn prisma:seed:demo` | Add demo products (`--remove` deletes them) |
+| `yarn prisma:studio`    | Open Prisma Studio database UI              |
 
 ---
 
