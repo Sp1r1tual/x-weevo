@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: CartRouteProps) {
   const t = await getTranslations({ locale, namespace: "Cart" });
 
   return {
-    title: `${t("title")} | X-Weevo`,
+    title: t("title"),
   };
 }
 

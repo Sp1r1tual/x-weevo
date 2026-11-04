@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: RouteProps) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "Returns" });
   return {
-    title: `${t("title")} | X-Weevo`,
+    title: t("title"),
     description: t("metaDescription"),
     robots: { index: false, follow: false },
   };

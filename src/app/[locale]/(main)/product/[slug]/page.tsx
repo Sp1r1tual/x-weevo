@@ -1,28 +1,14 @@
 import { notFound } from "next/navigation";
 
 import { findProductBySlug } from "@/db/product";
-import { prisma } from "@/libs/prisma";
 
 import { ProductDetail } from "@/components/pages/ProductDetail/ProductDetail";
 import { JsonLd } from "@/components/ui/JsonLd/JsonLd";
 
 import { BASE_URL } from "@/common/constants/env";
 import { getLocalizedField } from "@/common/utils/locale";
+import { isVariantInStock } from "@/common/utils/product";
 import { getSeoAlternates } from "@/common/utils/seo";
-
-export const revalidate = 300;
-
-export async function generateStaticParams() {
-  const products = await prisma.product.findMany({
-    where: { status: "PUBLISHED", deletedAt: null },
-    select: { slug: true },
-  });
-
-  return products.flatMap((p) => [
-    { locale: "uk", slug: p.slug },
-    { locale: "en", slug: p.slug },
-  ]);
-}
 
 interface ProductRouteProps {
   params: Promise<{ locale: string; slug: string }>;
@@ -82,10 +68,9 @@ export default async function ProductRoute({ params }: ProductRouteProps) {
       "@type": "Offer",
       priceCurrency: "UAH",
       price: product.discountPrice ?? product.price,
-      availability:
-        product.variants.length > 0
-          ? "https://schema.org/InStock"
-          : "https://schema.org/OutOfStock",
+      availability: product.variants.some(isVariantInStock)
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
       url: `${BASE_URL}/${locale}/product/${product.slug}`,
     },
   };

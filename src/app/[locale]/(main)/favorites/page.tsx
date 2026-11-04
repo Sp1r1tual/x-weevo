@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: FavoritesRouteProps) {
   const t = await getTranslations({ locale, namespace: "Favorites" });
 
   return {
-    title: `${t("title")} | X-Weevo`,
+    title: t("title"),
   };
 }
 

@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PrivacyRouteProps) {
   const t = await getTranslations({ locale, namespace: "Privacy" });
 
   return {
-    title: `${t("title")} | X-Weevo`,
+    title: t("title"),
     description: t("section1Content"),
     robots: { index: true, follow: true },
   };

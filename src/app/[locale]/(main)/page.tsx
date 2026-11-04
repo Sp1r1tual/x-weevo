@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: LandingRouteProps) {
   const t = await getTranslations({ locale, namespace: "Layout" });
 
   return {
-    title: t("title"),
+    title: { absolute: t("title") },
     description: t("description"),
     alternates: getSeoAlternates(locale, ""),
   };

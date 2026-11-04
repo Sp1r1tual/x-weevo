@@ -4,6 +4,8 @@ import { prisma } from "@/libs/prisma";
 
 import { BASE_URL } from "@/common/constants/env";
 
+export const revalidate = 3600;
+
 const LOCALES = ["uk", "en"];
 
 function buildAlternates(path: string) {
