@@ -18,6 +18,7 @@ import { Modal } from "@/components/ui/Modal/Modal";
 import { useAuthStore } from "@/store/useAuthStore";
 
 import { CARRIER_LOGOS } from "@/common/constants/images/carrier-logos";
+import { unwrapActionResult } from "@/common/utils/action-result";
 import {
   type AddressFormData,
   CARRIERS,
@@ -100,19 +101,22 @@ export const AddressModal = ({ isOpen, onClose, onSuccess }: AddressModalProps) 
         warehouse: data.warehouse,
       };
       if (!user.phone && data.phone) {
-        await updateProfileAction(
-          {
-            name: user.name,
-            phone: data.phone,
-            carrier: data.carrier,
-            city: data.city,
-            warehouse: data.warehouse,
-          },
-          locale,
+        unwrapActionResult(
+          await updateProfileAction(
+            {
+              name: user.name,
+              phone: data.phone,
+              carrier: data.carrier,
+              city: data.city,
+              warehouse: data.warehouse,
+            },
+            locale,
+          ),
+          t("address.error"),
         );
         updateUser({ phone: data.phone, address: addrData });
       } else {
-        await saveAddressAction(addrData);
+        unwrapActionResult(await saveAddressAction(addrData), t("address.error"));
         updateUser({ address: addrData });
       }
       onSuccess();

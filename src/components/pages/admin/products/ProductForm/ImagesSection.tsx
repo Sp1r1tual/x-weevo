@@ -32,6 +32,7 @@ import { ConfirmChoiceModal } from "@/components/ui/Modal/ConfirmChoiceModal";
 
 import { SortableImageCard } from "./SortableImageCard";
 
+import { unwrapActionResult } from "@/common/utils/action-result";
 import { convertToWebP } from "@/common/utils/image";
 import { type ProductFormData } from "@/common/validation/product/product.schema";
 
@@ -219,7 +220,7 @@ export function ImagesSection({
         if (!entry.fieldId) continue;
         const formData = new FormData();
         formData.append("file", entry.file);
-        const url = await uploadProductImage(formData);
+        const url = unwrapActionResult(await uploadProductImage(formData), t("messages.error"));
 
         const idx = imageFields.findIndex((f) => f.id === entry.fieldId);
         if (idx !== -1) {

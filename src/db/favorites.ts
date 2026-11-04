@@ -6,7 +6,7 @@ export * from "@/types/favorites.types";
 
 export async function getFavorites(userId: string): Promise<FavoriteProduct[]> {
   const favorites = await prisma.favorite.findMany({
-    where: { userId },
+    where: { userId, product: { deletedAt: null, status: "PUBLISHED" } },
     select: {
       id: true,
       product: {

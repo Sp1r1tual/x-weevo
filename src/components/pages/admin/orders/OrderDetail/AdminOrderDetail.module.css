@@ -171,6 +171,12 @@
   filter: brightness(0.95);
 }
 
+.statusOption:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: none;
+}
+
 .statusOptionActive {
   border-color: currentColor;
 }

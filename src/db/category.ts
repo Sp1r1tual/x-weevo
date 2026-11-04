@@ -55,8 +55,7 @@ export async function findCategoriesForSelect() {
 }
 
 export async function insertCategory(data: CategoryFormData) {
-  invalidateCategoryCache();
-  return prisma.category.create({
+  const category = await prisma.category.create({
     data: {
       nameUk: data.nameUk,
       nameEn: data.nameEn,
@@ -70,11 +69,13 @@ export async function insertCategory(data: CategoryFormData) {
     },
     select: { id: true, slug: true },
   });
+
+  invalidateCategoryCache();
+  return category;
 }
 
 export async function updateCategory(id: string, data: CategoryFormData) {
-  invalidateCategoryCache();
-  return prisma.category.update({
+  const category = await prisma.category.update({
     where: { id },
     data: {
       nameUk: data.nameUk,
@@ -89,6 +90,9 @@ export async function updateCategory(id: string, data: CategoryFormData) {
     },
     select: { id: true, slug: true },
   });
+
+  invalidateCategoryCache();
+  return category;
 }
 
 export async function deleteCategory(id: string) {
@@ -107,8 +111,10 @@ export async function deleteCategory(id: string) {
   if (category._count.children > 0) throw new Error("HAS_CHILDREN");
   if (category._count.products > 0) throw new Error("HAS_PRODUCTS");
 
+  const deleted = await prisma.category.delete({ where: { id } });
+
   invalidateCategoryCache();
-  return prisma.category.delete({ where: { id } });
+  return deleted;
 }
 
 export async function findCategoryBySlug(slug: string) {
@@ -157,18 +163,19 @@ export async function findAllDescendantCategoryIds(parentId: string): Promise<st
     select: { id: true, parentId: true },
   });
 
-  const descendantIds: string[] = [];
+  const descendantIds = new Set<string>();
 
   function collectDescendants(currentParentId: string) {
     for (const cat of allCategories) {
-      if (cat.parentId === currentParentId) {
-        descendantIds.push(cat.id);
+      if (cat.parentId === currentParentId && !descendantIds.has(cat.id)) {
+        descendantIds.add(cat.id);
         collectDescendants(cat.id);
       }
     }
   }
 
   collectDescendants(parentId);
-  categoryCache.set(cacheKey, descendantIds);
-  return descendantIds;
+  const result = [...descendantIds];
+  categoryCache.set(cacheKey, result);
+  return result;
 }

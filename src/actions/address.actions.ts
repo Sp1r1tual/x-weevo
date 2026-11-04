@@ -3,7 +3,10 @@
 import { getDefaultAddress, upsertDefaultAddress } from "@/db/address";
 import type { ShippingCarrier } from "@prisma/client";
 
+import { actionRateLimit } from "@/common/auth/rate-limit";
 import { assertAuth } from "@/common/auth/server";
+import { ActionError } from "@/common/utils/action-result";
+import { runAction } from "@/common/utils/action-result.server";
 import {
   type AddressFormData,
   addressSchema,
@@ -15,19 +18,23 @@ export async function getAddressAction() {
 }
 
 export async function saveAddressAction(data: AddressFormData) {
-  const user = await assertAuth();
+  return runAction(async () => {
+    const user = await assertAuth();
 
-  const result = addressSchema.safeParse(data);
-  if (!result.success) {
-    throw new Error(result.error.issues[0].message);
-  }
+    await actionRateLimit.check(20, `saveAddress:${user.id}`);
 
-  const { carrier, city, warehouse } = result.data;
+    const result = addressSchema.safeParse(data);
+    if (!result.success) {
+      throw new ActionError(result.error.issues[0].message);
+    }
 
-  return upsertDefaultAddress(user.id, {
-    carrier: carrier as ShippingCarrier,
-    city,
-    warehouse,
-    street: null,
+    const { carrier, city, warehouse } = result.data;
+
+    return upsertDefaultAddress(user.id, {
+      carrier: carrier as ShippingCarrier,
+      city,
+      warehouse,
+      street: null,
+    });
   });
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { clearCart, getCart } from "@/db/cart";
+import { getCart } from "@/db/cart";
 import {
   cancelOrder,
   createOrder,
@@ -9,12 +9,13 @@ import {
   updateOrderContact,
 } from "@/db/order";
 import { prisma } from "@/libs/prisma";
-import type { ShippingCarrier } from "@prisma/client";
 import { z } from "zod";
 
 import { actionRateLimit } from "@/common/auth/rate-limit";
 import { assertAuth } from "@/common/auth/server";
-import { revalidateLocalizedPath } from "@/common/utils/revalidate";
+import { DomainError } from "@/common/utils/action-result";
+import { runAction } from "@/common/utils/action-result.server";
+import { revalidateLocalizedPath, revalidateProductPages } from "@/common/utils/revalidate";
 import { updateOrderContactSchema } from "@/common/validation/order/order.schema";
 
 export async function getOrdersAction() {
@@ -25,7 +26,7 @@ export async function getOrdersAction() {
 export async function getOrderAction(orderId: string) {
   const user = await assertAuth();
 
-  if (!z.string().uuid().safeParse(orderId).success) {
+  if (!z.uuid().safeParse(orderId).success) {
     throw new Error("Invalid order ID");
   }
 
@@ -65,75 +66,69 @@ export async function cancelOrderAction(orderId: string) {
 
   await actionRateLimit.check(10, `cancelOrder:${user.id}`);
 
-  if (!z.string().uuid().safeParse(orderId).success) {
+  if (!z.uuid().safeParse(orderId).success) {
     throw new Error("Invalid order ID");
   }
 
   const result = await cancelOrder(orderId, user.id);
   revalidateLocalizedPath(`/profile/orders/${orderId}`);
   revalidateLocalizedPath("/profile");
+  revalidateProductPages(result.items.map((item) => item.product?.slug));
   return result;
 }
 
-export async function createOrderAction(): Promise<string> {
-  const user = await assertAuth();
+export async function createOrderAction() {
+  return runAction(async () => {
+    const user = await assertAuth();
 
-  await actionRateLimit.check(5, `createOrder:${user.id}`);
+    await actionRateLimit.check(5, `createOrder:${user.id}`);
 
-  const [cartItems, profile] = await Promise.all([
-    getCart(user.id),
-    prisma.user.findUnique({
-      where: { id: user.id },
-      select: {
-        name: true,
-        email: true,
-        phone: true,
-        addresses: {
-          where: { isDefault: true },
-          select: { carrier: true, city: true, warehouse: true },
-          take: 1,
+    const [cartItems, profile] = await Promise.all([
+      getCart(user.id),
+      prisma.user.findUnique({
+        where: { id: user.id },
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+          addresses: {
+            where: { isDefault: true },
+            select: { carrier: true, city: true, warehouse: true },
+            take: 1,
+          },
         },
-      },
-    }),
-  ]);
+      }),
+    ]);
 
-  if (cartItems.length === 0) {
-    throw new Error("Cart is empty");
-  }
+    if (cartItems.length === 0) throw new DomainError("cartEmpty");
+    if (!profile?.phone) throw new DomainError("phoneRequired");
 
-  if (!profile?.phone) {
-    throw new Error("Phone number is required to place an order");
-  }
+    const address = profile.addresses[0];
+    if (!address) throw new DomainError("addressRequired");
 
-  const address = profile.addresses[0];
-  if (!address) {
-    throw new Error("Shipping address is required to place an order");
-  }
+    const order = await createOrder({
+      userId: user.id,
+      contactName: profile.name ?? profile.email ?? "Customer",
+      contactEmail: profile.email ?? "",
+      contactPhone: profile.phone,
+      carrier: address.carrier,
+      shippingAddress: `${address.city}, ${address.warehouse}`,
+      items: cartItems.map((item) => ({
+        cartItemId: item.id,
+        productId: item.productId,
+        variantId: item.variantId,
+        productNameUk: item.product.nameUk,
+        productNameEn: item.product.nameEn,
+        productSize: item.variant?.size ?? null,
+        productColor: item.variant?.colorUk ?? null,
+        quantity: item.quantity,
+      })),
+    });
 
-  const shippingAddress = `${address.city}, ${address.warehouse}`;
+    revalidateLocalizedPath("/cart");
+    revalidateLocalizedPath("/profile");
+    revalidateProductPages(cartItems.map((item) => item.product.slug));
 
-  const order = await createOrder({
-    userId: user.id,
-    contactName: profile?.name ?? profile?.email ?? "Customer",
-    contactEmail: profile?.email ?? "",
-    contactPhone: profile?.phone ?? "",
-    carrier: address.carrier as ShippingCarrier,
-    shippingAddress,
-    items: cartItems.map((item) => ({
-      productId: item.productId,
-      variantId: item.variantId,
-      productNameUk: item.product.nameUk,
-      productNameEn: item.product.nameEn,
-      productSize: item.variant?.size ?? null,
-      productColor: item.variant?.colorUk ?? null,
-      quantity: item.quantity,
-    })),
+    return order.id;
   });
-
-  await clearCart(user.id);
-
-  revalidateLocalizedPath("/cart");
-  revalidateLocalizedPath("/profile");
-
-  return order.id;
 }

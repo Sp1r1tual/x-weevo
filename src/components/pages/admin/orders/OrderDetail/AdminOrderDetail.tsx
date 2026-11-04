@@ -10,6 +10,8 @@ import type { AdminOrderData } from "@/db/order";
 import { Link } from "@/i18n/navigation";
 import { ArrowLeft, Check, Package, Truck, User } from "lucide-react";
 
+import { ORDER_STATUS_TRANSITIONS } from "@/common/constants/order";
+import { unwrapActionResult } from "@/common/utils/action-result";
 import { formatPrice } from "@/common/utils/format";
 import { getLocalizedField } from "@/common/utils/locale";
 
@@ -51,10 +53,13 @@ export const AdminOrderDetail = ({ order }: Props) => {
     if (selectedStatus === order.status && trackingNumber === (order.trackingNumber ?? "")) return;
     setSavingStatus(true);
     try {
-      await updateAdminOrderStatusAction(order.id, selectedStatus, trackingNumber.trim() || null);
+      unwrapActionResult(
+        await updateAdminOrderStatusAction(order.id, selectedStatus, trackingNumber.trim() || null),
+        t("detail.statusError"),
+      );
       toast.success(t("detail.statusUpdated"));
-    } catch {
-      toast.error(t("detail.statusError"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("detail.statusError"));
       setSelectedStatus(order.status);
     } finally {
       setSavingStatus(false);
@@ -99,9 +104,13 @@ export const AdminOrderDetail = ({ order }: Props) => {
                 {ORDER_STATUSES.map((s) => {
                   const sk = STATUS_STYLE[s];
                   const isActive = selectedStatus === s;
+                  const isAvailable =
+                    s === order.status ||
+                    ORDER_STATUS_TRANSITIONS[order.status as OrderStatus].includes(s);
                   return (
                     <button
                       key={s}
+                      disabled={!isAvailable}
                       onClick={() => setSelectedStatus(s)}
                       className={`${styles.statusOption} ${isActive ? styles.statusOptionActive : ""} ${styles[`statusOption_${sk}`]}`}
                     >

@@ -1,55 +1,84 @@
 "use server";
 
+import { getTranslations } from "next-intl/server";
+
 import {
   deleteCategory as deleteCategoryDb,
+  findAllDescendantCategoryIds,
   insertCategory,
   updateCategory as updateCategoryDb,
 } from "@/db/category";
 import { z } from "zod";
 
 import { assertAdmin } from "@/common/auth/server";
-import { revalidateLocalizedPath } from "@/common/utils/revalidate";
+import { ActionError } from "@/common/utils/action-result";
+import { runAction } from "@/common/utils/action-result.server";
+import { isUniqueConstraintError } from "@/common/utils/prisma-errors";
+import { revalidateLocalizedPath, revalidateStorefront } from "@/common/utils/revalidate";
 import { type CategoryFormData } from "@/common/validation/category/category.schema";
 import { getCategorySchema } from "@/common/validation/category/category.schema.server";
 
-export async function createCategory(data: CategoryFormData, locale: string) {
-  await assertAdmin();
-
+async function parseCategory(data: CategoryFormData, locale: string) {
   const schema = await getCategorySchema(locale);
   const result = schema.safeParse(data);
 
   if (!result.success) {
-    throw new Error(result.error.issues[0].message);
+    throw new ActionError(result.error.issues[0].message);
   }
 
-  const category = await insertCategory(result.data);
+  return result.data;
+}
 
-  revalidateLocalizedPath("/admin/categories");
-  return category;
+async function saveCategory<T>(locale: string, save: () => Promise<T>) {
+  try {
+    return await save();
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      const t = await getTranslations({ locale, namespace: "Admin.categories.form.validation" });
+      throw new ActionError(t("slugTaken"));
+    }
+    throw error;
+  }
+}
+
+export async function createCategory(data: CategoryFormData, locale: string) {
+  return runAction(async () => {
+    await assertAdmin();
+
+    const parsed = await parseCategory(data, locale);
+    const category = await saveCategory(locale, () => insertCategory(parsed));
+
+    revalidateLocalizedPath("/admin/categories");
+    revalidateStorefront();
+    return category;
+  });
 }
 
 export async function updateCategory(id: string, data: CategoryFormData, locale: string) {
-  await assertAdmin();
+  return runAction(async () => {
+    await assertAdmin();
 
-  if (!z.uuid().safeParse(id).success) {
-    throw new Error("Invalid category ID");
-  }
+    if (!z.uuid().safeParse(id).success) {
+      throw new Error("Invalid category ID");
+    }
 
-  const schema = await getCategorySchema(locale);
-  const result = schema.safeParse(data);
+    const parsed = await parseCategory(data, locale);
 
-  if (!result.success) {
-    throw new Error(result.error.issues[0].message);
-  }
+    if (parsed.parentId) {
+      const descendantIds = await findAllDescendantCategoryIds(id);
 
-  try {
-    const category = await updateCategoryDb(id, result.data);
+      if (parsed.parentId === id || descendantIds.includes(parsed.parentId)) {
+        const t = await getTranslations({ locale, namespace: "Admin.categories.form.validation" });
+        throw new ActionError(t("parentInvalid"));
+      }
+    }
+
+    const category = await saveCategory(locale, () => updateCategoryDb(id, parsed));
+
     revalidateLocalizedPath("/admin/categories");
+    revalidateStorefront();
     return category;
-  } catch (error) {
-    console.error("Failed to update category:", error);
-    throw new Error("Failed to update category due to an internal error");
-  }
+  });
 }
 
 export async function deleteCategory(id: string) {
@@ -62,21 +91,9 @@ export async function deleteCategory(id: string) {
   try {
     await deleteCategoryDb(id);
     revalidateLocalizedPath("/admin/categories");
+    revalidateStorefront();
   } catch (error) {
     console.error("Failed to delete category:", error);
-    if (error instanceof Error) {
-      if (error.message === "CANNOT_DELETE_BASE_CATEGORY") {
-        throw new Error(
-          "Cannot delete built-in categories (men, women, unisex, accessories, men-shoes, women-shoes, unisex-shoes, men-outerwear, women-outerwear, unisex-outerwear, men-pants, women-pants, unisex-pants).",
-        );
-      }
-      if (error.message === "HAS_CHILDREN") {
-        throw new Error("Cannot delete a category that has subcategories.");
-      }
-      if (error.message === "HAS_PRODUCTS") {
-        throw new Error("Cannot delete a category that has products.");
-      }
-    }
     throw new Error("Failed to delete category due to an internal error");
   }
 }

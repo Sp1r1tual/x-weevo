@@ -1,40 +1,40 @@
 "use server";
 
 import { updateOrderStatusAdmin } from "@/db/order";
+import { OrderStatus } from "@prisma/client";
 import { z } from "zod";
 
 import { actionRateLimit } from "@/common/auth/rate-limit";
 import { assertAdmin } from "@/common/auth/server";
-import { revalidateLocalizedPath } from "@/common/utils/revalidate";
+import { runAction } from "@/common/utils/action-result.server";
+import { revalidateLocalizedPath, revalidateProductPages } from "@/common/utils/revalidate";
+
+const updateOrderStatusSchema = z.object({
+  orderId: z.uuid(),
+  status: z.enum(OrderStatus),
+  trackingNumber: z.string().max(255).nullable().optional(),
+});
 
 export async function updateAdminOrderStatusAction(
   orderId: string,
   status: string,
   trackingNumber?: string | null,
 ) {
-  const admin = await assertAdmin();
+  return runAction(async () => {
+    const admin = await assertAdmin();
 
-  await actionRateLimit.check(120, `adminOrderAction:${admin.id}`);
+    await actionRateLimit.check(120, `adminOrderAction:${admin.id}`);
 
-  if (!z.string().uuid().safeParse(orderId).success) {
-    throw new Error("Invalid order ID");
-  }
+    const input = updateOrderStatusSchema.parse({ orderId, status, trackingNumber });
 
-  const validStatuses = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"];
-  if (!validStatuses.includes(status)) {
-    throw new Error("Invalid status");
-  }
+    const result = await updateOrderStatusAdmin(input.orderId, input.status, input.trackingNumber);
 
-  if (trackingNumber && !z.string().max(255).safeParse(trackingNumber).success) {
-    throw new Error("Invalid tracking number");
-  }
+    revalidateLocalizedPath(`/admin/orders/${orderId}`);
+    revalidateLocalizedPath("/admin/orders");
+    revalidateLocalizedPath(`/profile/orders/${orderId}`);
+    revalidateLocalizedPath("/profile");
+    revalidateProductPages(result.items.map((item) => item.product?.slug));
 
-  const result = await updateOrderStatusAdmin(orderId, status, trackingNumber);
-
-  revalidateLocalizedPath(`/admin/orders/${orderId}`);
-  revalidateLocalizedPath("/admin/orders");
-  revalidateLocalizedPath(`/profile/orders/${orderId}`);
-  revalidateLocalizedPath("/profile");
-
-  return result;
+    return result;
+  });
 }

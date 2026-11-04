@@ -13,6 +13,7 @@ import { AdminInput } from "@/components/ui/admin/AdminInput/AdminInput";
 import { AdminSelect } from "@/components/ui/admin/AdminSelect/AdminSelect";
 import { AdminTextarea } from "@/components/ui/admin/AdminTextarea/AdminTextarea";
 
+import { unwrapActionResult } from "@/common/utils/action-result";
 import {
   type CategoryFormData,
   createCategorySchema,
@@ -98,19 +99,20 @@ export const CategoryForm = ({ categories, editId, defaultValues }: CategoryForm
   const onSubmit = async (data: CategoryFormData) => {
     try {
       if (editId) {
-        await updateCategory(editId, data, locale);
+        unwrapActionResult(await updateCategory(editId, data, locale), t("messages.error"));
         toast.success(t("messages.updateSuccess"));
       } else if (createForBoth && canCreateForBoth) {
-        await Promise.all([
+        const results = await Promise.all([
           createCategory({ ...data, parentId: menCategory!.id, slug: `${data.slug}-men` }, locale),
           createCategory(
             { ...data, parentId: womenCategory!.id, slug: `${data.slug}-women` },
             locale,
           ),
         ]);
+        results.forEach((result) => unwrapActionResult(result, t("messages.error")));
         toast.success(t("messages.createSuccess"));
       } else {
-        await createCategory(data, locale);
+        unwrapActionResult(await createCategory(data, locale), t("messages.error"));
         toast.success(t("messages.createSuccess"));
       }
       router.push("/admin/categories");

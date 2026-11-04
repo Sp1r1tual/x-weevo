@@ -86,7 +86,7 @@
   "SearchPage": {
     "home": "Home",
     "title": "Search",
-    "metaTitle": "Search | X-Weevo",
+    "metaTitle": "Search",
     "metaDescription": "Search for products in our clothing store",
     "resultsFor": "Results for",
     "found": "{count} products",
@@ -102,7 +102,7 @@
   },
   "CatalogPage": {
     "title": "Catalog",
-    "metaTitle": "Catalog | X-Weevo",
+    "metaTitle": "Catalog",
     "metaDescription": "Discover our full collection of stylish and trendy clothes.",
     "description": "Explore all our categories and find your perfect style.",
     "viewCollection": "View collection"
@@ -287,7 +287,8 @@
         "CANCELLED": "Cancelled",
         "REFUNDED": "Refunded"
       }
-    }
+    },
+    "updateError": "Failed to update profile"
   },
   "AuthCodeError": {
     "title": "Authentication Error",
@@ -449,7 +450,10 @@
           "productDiscountPricePositive": "Discounted price must be greater than 0",
           "productCategoryRequired": "Category is required",
           "imageSizeMax": "File size must be less than 5MB",
-          "imageTypeInvalid": "Only image files are allowed"
+          "imageTypeInvalid": "Only image files are allowed",
+          "productDiscountPriceTooHigh": "Discounted price must be lower than the regular price",
+          "productSlugTaken": "A product with this slug or SKU already exists",
+          "imageUploadFailed": "Failed to upload the image"
         }
       }
     },
@@ -522,7 +526,9 @@
           "nameRequired": "Name is required",
           "nameMax": "Name is too long",
           "slugRequired": "Slug is required",
-          "slugRegex": "Only lowercase letters, numbers, and hyphens"
+          "slugRegex": "Only lowercase letters, numbers, and hyphens",
+          "slugTaken": "A category with this slug already exists",
+          "parentInvalid": "A category cannot be nested inside itself or its subcategory"
         }
       }
     },
@@ -645,8 +651,6 @@
     "empty": "Your cart is empty",
     "emptyDescription": "Add products to your cart to place an order",
     "goCatalog": "Go to Catalog",
-    "items": "items",
-    "item": "item",
     "size": "Size",
     "color": "Color",
     "quantity": "Quantity",
@@ -668,18 +672,19 @@
     "clearConfirmTitle": "Clear Cart",
     "clearConfirmDesc": "Are you sure you want to remove all items from your cart?",
     "clearConfirmYes": "Clear",
-    "clearConfirmNo": "Cancel"
+    "clearConfirmNo": "Cancel",
+    "itemsCount": "{count, plural, one {# item} other {# items}}"
   },
   "Favorites": {
     "title": "Favorites",
     "empty": "Your favorites list is empty",
-    "emptyDescription": "Click \u2661 on any product to save it here",
+    "emptyDescription": "Click ♡ on any product to save it here",
     "goCatalog": "Go to Catalog",
     "remove": "Remove from Favorites",
     "loginRequired": "Sign in to view your favorites",
     "loginButton": "Sign In",
-    "items": "items",
-    "addToCart": "Add to Cart"
+    "addToCart": "Add to Cart",
+    "itemsCount": "{count, plural, one {# item} other {# items}}"
   },
   "Errors": {
     "addToCart": "Failed to add to cart",
@@ -687,7 +692,19 @@
     "removeFavorite": "Failed to remove favorite",
     "updateQuantity": "Failed to update quantity",
     "removeItem": "Failed to remove item",
-    "clearCart": "Failed to clear cart"
+    "clearCart": "Failed to clear cart",
+    "cartEmpty": "Your cart is empty",
+    "cartChanged": "Your cart has changed. Refresh the page and try again",
+    "phoneRequired": "Add a phone number to place an order",
+    "addressRequired": "Add a shipping address to place an order",
+    "productNotFound": "This product is no longer available",
+    "productUnavailable": "“{name}” is no longer available",
+    "sizeRequired": "Select a size for “{name}”",
+    "outOfStock": "“{name}” is not available in the requested quantity",
+    "stockLimit": "Only {stock} left in stock",
+    "quantityLimit": "You can add up to 99 of one item",
+    "orderChanged": "This order has just changed. Refresh the page",
+    "orderTransitionInvalid": "This status change is not available"
   },
   "NotFound": {
     "title": "Page Not Found",

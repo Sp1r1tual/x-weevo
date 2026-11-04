@@ -1,11 +1,30 @@
 "use server";
 
-import { addToCart, clearCart, getCart, removeCartItem, updateCartItemQuantity } from "@/db/cart";
+import {
+  MAX_CART_ITEM_QUANTITY,
+  addToCart,
+  clearCart,
+  getCart,
+  removeCartItem,
+  updateCartItemQuantity,
+} from "@/db/cart";
 import { z } from "zod";
 
 import { actionRateLimit } from "@/common/auth/rate-limit";
 import { assertAuth } from "@/common/auth/server";
+import { runAction } from "@/common/utils/action-result.server";
 import { revalidateLocalizedPath } from "@/common/utils/revalidate";
+
+const addToCartSchema = z.object({
+  productId: z.uuid(),
+  variantId: z.uuid().nullish(),
+  quantity: z.number().int().min(1).max(MAX_CART_ITEM_QUANTITY),
+});
+
+const updateCartItemSchema = z.object({
+  cartItemId: z.uuid(),
+  quantity: z.number().int().min(0).max(MAX_CART_ITEM_QUANTITY),
+});
 
 export async function getCartAction() {
   const user = await assertAuth();
@@ -13,36 +32,29 @@ export async function getCartAction() {
 }
 
 export async function addToCartAction(productId: string, variantId?: string | null, quantity = 1) {
-  const user = await assertAuth();
+  return runAction(async () => {
+    const user = await assertAuth();
 
-  await actionRateLimit.check(100, `addToCart:${user.id}`);
+    await actionRateLimit.check(100, `addToCart:${user.id}`);
 
-  if (!z.uuid().safeParse(productId).success) {
-    throw new Error("Invalid product ID");
-  }
-  if (variantId && !z.string().uuid().safeParse(variantId).success) {
-    throw new Error("Invalid variant ID");
-  }
-  if (quantity < 1 || quantity > 99) {
-    throw new Error("Invalid quantity");
-  }
+    const input = addToCartSchema.parse({ productId, variantId, quantity });
 
-  const result = await addToCart(user.id, productId, variantId, quantity);
-  revalidateLocalizedPath("/cart");
-  return result;
+    const result = await addToCart(user.id, input.productId, input.variantId, input.quantity);
+    revalidateLocalizedPath("/cart");
+    return result;
+  });
 }
 
 export async function updateCartItemAction(cartItemId: string, quantity: number) {
-  const user = await assertAuth();
+  return runAction(async () => {
+    const user = await assertAuth();
 
-  await actionRateLimit.check(100, `updateCartItem:${user.id}`);
+    await actionRateLimit.check(100, `updateCartItem:${user.id}`);
 
-  if (!z.string().uuid().safeParse(cartItemId).success) {
-    throw new Error("Invalid cart item ID");
-  }
+    const input = updateCartItemSchema.parse({ cartItemId, quantity });
 
-  const result = await updateCartItemQuantity(user.id, cartItemId, quantity);
-  return result;
+    return updateCartItemQuantity(user.id, input.cartItemId, input.quantity);
+  });
 }
 
 export async function removeCartItemAction(cartItemId: string) {
@@ -50,7 +62,7 @@ export async function removeCartItemAction(cartItemId: string) {
 
   await actionRateLimit.check(100, `removeCartItem:${user.id}`);
 
-  if (!z.string().uuid().safeParse(cartItemId).success) {
+  if (!z.uuid().safeParse(cartItemId).success) {
     throw new Error("Invalid cart item ID");
   }
 

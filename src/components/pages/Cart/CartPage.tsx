@@ -25,6 +25,8 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useCartStore } from "@/store/useCartStore";
 import { useModalStore } from "@/store/useModalStore";
 
+import { unwrapActionResult } from "@/common/utils/action-result";
+
 import styles from "./CartPage.module.css";
 
 interface CartPageProps {
@@ -64,12 +66,12 @@ export const CartPage = ({ locale }: CartPageProps) => {
   const processCheckout = async () => {
     try {
       setIsCheckingOut(true);
-      const orderId = await createOrderAction();
+      const orderId = unwrapActionResult(await createOrderAction(), t("checkoutError"));
       clear();
       toast.success(t("checkoutSuccess"));
       router.push(`/profile/orders/${orderId}`);
-    } catch {
-      toast.error(t("checkoutError"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("checkoutError"));
       setIsCheckingOut(false);
     }
   };
@@ -168,9 +170,7 @@ export const CartPage = ({ locale }: CartPageProps) => {
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>{t("title")}</h1>
-            <p className={styles.subtitle}>
-              {totalCount} {totalCount === 1 ? t("item") : t("items")}
-            </p>
+            <p className={styles.subtitle}>{t("itemsCount", { count: totalCount })}</p>
           </div>
           <button
             className={styles.clearBtn}

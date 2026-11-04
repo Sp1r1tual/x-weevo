@@ -14,6 +14,7 @@ import { SkeletonImage } from "@/components/ui/SkeletonImage/SkeletonImage";
 import { useCartStore } from "@/store/useCartStore";
 import type { CartItem as CartItemType } from "@/store/useCartStore";
 
+import { unwrapActionResult } from "@/common/utils/action-result";
 import { getLocalizedField } from "@/common/utils/locale";
 
 import styles from "./CartItem.module.css";
@@ -32,7 +33,7 @@ export const CartItem = ({ item, locale }: CartItemProps) => {
   const [localQty, setLocalQty] = useState(item.quantity);
 
   const name = getLocalizedField(item.product, "name", locale);
-  const image = item.product.images[0]?.url || "/placeholder.jpg";
+  const image = item.product.images[0]?.url || "/placeholder.webp";
   const altText = item.product.images[0]?.altText || name;
   const unitPrice = item.product.discountPrice ?? item.product.price;
 
@@ -43,11 +44,11 @@ export const CartItem = ({ item, locale }: CartItemProps) => {
     updateQuantity(item.id, newQty);
     startQtyTransition(async () => {
       try {
-        await updateCartItemAction(item.id, newQty);
-      } catch {
+        unwrapActionResult(await updateCartItemAction(item.id, newQty), tErr("updateQuantity"));
+      } catch (error) {
         setLocalQty(item.quantity);
         updateQuantity(item.id, item.quantity);
-        toast.error(tErr("updateQuantity"));
+        toast.error(error instanceof Error ? error.message : tErr("updateQuantity"));
       }
     });
   };

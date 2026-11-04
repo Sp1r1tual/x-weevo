@@ -8,7 +8,8 @@ export type CreateOrderInput = {
   carrier: ShippingCarrier;
   shippingAddress: string;
   items: Array<{
-    productId: string | null;
+    cartItemId: string;
+    productId: string;
     variantId: string | null;
     productNameUk: string;
     productNameEn: string;

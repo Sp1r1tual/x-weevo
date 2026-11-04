@@ -1,5 +1,7 @@
 "use client";
 
+import { isVariantInStock } from "@/common/utils/product";
+
 import styles from "./SizeSelector.module.css";
 
 interface SizeSelectorProps {
@@ -13,7 +15,7 @@ export const SizeSelector = ({ variants, selectedSize, onSelect }: SizeSelectorP
     <div className={styles.container}>
       {variants.map((variant) => {
         const isSelected = selectedSize === variant.size;
-        const isOutOfStock = variant.stock === 0;
+        const isOutOfStock = !isVariantInStock(variant);
 
         return (
           <button

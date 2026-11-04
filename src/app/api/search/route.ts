@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { searchProducts } from "@/db/product";
 
+import { getClientIp, limiter } from "@/common/auth/rate-limit";
 import { getLocalizedField } from "@/common/utils/locale";
-import { limiter } from "@/common/utils/rate-limit";
 
 export async function GET(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
+  const ip = getClientIp(request.headers);
   try {
     await limiter.check(60, `search:${ip}`);
   } catch {

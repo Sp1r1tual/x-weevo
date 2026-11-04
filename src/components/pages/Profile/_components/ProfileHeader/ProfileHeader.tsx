@@ -24,6 +24,7 @@ import { PhoneSection } from "../PhoneSection/PhoneSection";
 import { useAuthStore } from "@/store/useAuthStore";
 
 import { CARRIER_LOGOS } from "@/common/constants/images/carrier-logos";
+import { unwrapActionResult } from "@/common/utils/action-result";
 import {
   CARRIERS,
   type CarrierType,
@@ -105,15 +106,18 @@ export const ProfileHeader = () => {
       const trimmedName = data.name.trim();
       const phone = data.phone?.trim() || "";
 
-      const updatedData = await updateProfileAction(
-        {
-          name: trimmedName,
-          phone,
-          carrier: data.carrier,
-          city: data.city,
-          warehouse: data.warehouse,
-        },
-        locale,
+      const updatedData = unwrapActionResult(
+        await updateProfileAction(
+          {
+            name: trimmedName,
+            phone,
+            carrier: data.carrier,
+            city: data.city,
+            warehouse: data.warehouse,
+          },
+          locale,
+        ),
+        t("updateError"),
       );
 
       const addrData =
@@ -136,8 +140,7 @@ export const ProfileHeader = () => {
       toast.success(t("save") + "!");
       setIsEditing(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update profile";
-      toast.error(message);
+      toast.error(error instanceof Error ? error.message : t("updateError"));
     }
   };
 

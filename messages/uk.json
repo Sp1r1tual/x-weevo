@@ -86,7 +86,7 @@
   "SearchPage": {
     "home": "Головна",
     "title": "Пошук",
-    "metaTitle": "Пошук | X-Weevo",
+    "metaTitle": "Пошук",
     "metaDescription": "Пошук товарів у нашому магазині одягу",
     "resultsFor": "Результати за запитом",
     "found": "{count} товарів",
@@ -102,7 +102,7 @@
   },
   "CatalogPage": {
     "title": "Каталог товарів",
-    "metaTitle": "Каталог | X-Weevo",
+    "metaTitle": "Каталог",
     "metaDescription": "Відкрийте для себе нашу повну колекцію стильного та сучасного одягу.",
     "description": "Ознайомтесь з усіма категоріями та знайдіть свій ідеальний стиль.",
     "viewCollection": "Дивитись колекцію"
@@ -264,7 +264,7 @@
       "shipping": "Доставка",
       "contactInfo": "Контактні дані",
       "editContacts": "Редагувати контакти",
-      "contactName": "Ім\u2019я",
+      "contactName": "Ім’я",
       "contactEmail": "Email",
       "contactPhone": "Телефон",
       "saveChanges": "Зберегти зміни",
@@ -287,7 +287,8 @@
         "CANCELLED": "Скасовано",
         "REFUNDED": "Повернено"
       }
-    }
+    },
+    "updateError": "Не вдалося оновити профіль"
   },
   "AuthCodeError": {
     "title": "Помилка авторизації",
@@ -448,7 +449,11 @@
           "productPricePositive": "Ціна має бути більше 0",
           "productCategoryRequired": "Категорія обов'язкова",
           "imageSizeMax": "Розмір файлу має бути менше 5МБ",
-          "imageTypeInvalid": "Дозволено завантажувати тільки зображення"
+          "imageTypeInvalid": "Дозволено завантажувати тільки зображення",
+          "productDiscountPricePositive": "Ціна зі знижкою має бути більшою за 0",
+          "productDiscountPriceTooHigh": "Ціна зі знижкою має бути меншою за звичайну",
+          "productSlugTaken": "Товар із таким slug або SKU вже існує",
+          "imageUploadFailed": "Не вдалося завантажити зображення"
         }
       }
     },
@@ -521,7 +526,9 @@
           "nameRequired": "Назва обов'язкова",
           "nameMax": "Назва занадто довга",
           "slugRequired": "Slug обов'язковий",
-          "slugRegex": "Лише малі літери, цифри та дефіси"
+          "slugRegex": "Лише малі літери, цифри та дефіси",
+          "slugTaken": "Категорія з таким slug вже існує",
+          "parentInvalid": "Категорію не можна вкласти в саму себе або в її підкатегорію"
         }
       }
     },
@@ -644,8 +651,6 @@
     "empty": "Ваш кошик порожній",
     "emptyDescription": "Додайте товари до кошика, щоб оформити замовлення",
     "goCatalog": "Перейти до каталогу",
-    "items": "товарів",
-    "item": "товар",
     "size": "Розмір",
     "color": "Колір",
     "quantity": "Кількість",
@@ -667,7 +672,8 @@
     "clearConfirmTitle": "Очистити кошик",
     "clearConfirmDesc": "Ви впевнені, що хочете видалити всі товари з кошика?",
     "clearConfirmYes": "Очистити",
-    "clearConfirmNo": "Скасувати"
+    "clearConfirmNo": "Скасувати",
+    "itemsCount": "{count, plural, one {# товар} few {# товари} many {# товарів} other {# товару}}"
   },
   "Favorites": {
     "title": "Обране",
@@ -677,8 +683,8 @@
     "remove": "Видалити з обраного",
     "loginRequired": "Увійдіть, щоб переглянути обране",
     "loginButton": "Увійти",
-    "items": "товарів",
-    "addToCart": "В кошик"
+    "addToCart": "В кошик",
+    "itemsCount": "{count, plural, one {# товар} few {# товари} many {# товарів} other {# товару}}"
   },
   "Errors": {
     "addToCart": "Помилка при додаванні в кошик",
@@ -686,7 +692,19 @@
     "removeFavorite": "Помилка при видаленні з обраного",
     "updateQuantity": "Помилка при оновленні кількості",
     "removeItem": "Помилка при видаленні товару",
-    "clearCart": "Помилка при очищенні кошика"
+    "clearCart": "Помилка при очищенні кошика",
+    "cartEmpty": "Кошик порожній",
+    "cartChanged": "Кошик змінився. Оновіть сторінку й спробуйте ще раз",
+    "phoneRequired": "Вкажіть номер телефону, щоб оформити замовлення",
+    "addressRequired": "Вкажіть адресу доставки, щоб оформити замовлення",
+    "productNotFound": "Цей товар більше недоступний",
+    "productUnavailable": "Товар «{name}» більше недоступний",
+    "sizeRequired": "Оберіть розмір для товару «{name}»",
+    "outOfStock": "Товару «{name}» немає в потрібній кількості",
+    "stockLimit": "На складі залишилось лише {stock} шт.",
+    "quantityLimit": "Можна додати не більше 99 шт. одного товару",
+    "orderChanged": "Замовлення щойно змінилось. Оновіть сторінку",
+    "orderTransitionInvalid": "Такий перехід статусу недоступний"
   },
   "NotFound": {
     "title": "Сторінку не знайдено",

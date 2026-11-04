@@ -16,6 +16,7 @@ import { DetailsSection } from "./sections/DetailsSection/DetailsSection";
 import { PriceCategorySection } from "./sections/PriceCategorySection/PriceCategorySection";
 import { SeoSection } from "./sections/SeoSection/SeoSection";
 
+import { unwrapActionResult } from "@/common/utils/action-result";
 import { MAX_IMAGES, type ProductFormData } from "@/common/validation/product/product.schema";
 import { useProductSchema } from "@/common/validation/product/product.schema.client";
 
@@ -119,10 +120,10 @@ export const ProductForm = ({ categories, initialData, productId }: ProductFormP
         }));
       }
       if (productId) {
-        await updateProduct(productId, data, locale);
+        unwrapActionResult(await updateProduct(productId, data, locale), t("messages.error"));
         toast.success(t("messages.updateSuccess"));
       } else {
-        await createProduct(data, locale);
+        unwrapActionResult(await createProduct(data, locale), t("messages.error"));
         toast.success(t("messages.success"));
       }
       router.push("/admin/products");
@@ -144,7 +145,13 @@ export const ProductForm = ({ categories, initialData, productId }: ProductFormP
         return;
       }
 
-      handleSubmit(submitData)(e);
+      await handleSubmit(async (data) => {
+        try {
+          await submitData(data);
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : t("messages.error"));
+        }
+      })(e);
     },
     [handleSubmit, submitData, trigger, t],
   );

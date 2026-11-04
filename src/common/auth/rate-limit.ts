@@ -36,3 +36,11 @@ export const actionRateLimit = rateLimit({
   interval: 60 * 1000,
   uniqueTokenPerInterval: 500,
 });
+
+export const limiter = rateLimit({
+  interval: 15 * 60 * 1000,
+});
+
+export function getClientIp(headers: Headers): string {
+  return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+}

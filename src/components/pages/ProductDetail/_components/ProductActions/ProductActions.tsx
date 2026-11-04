@@ -18,6 +18,9 @@ import { useCartStore } from "@/store/useCartStore";
 import { useFavoritesStore } from "@/store/useFavoritesStore";
 import { useModalStore } from "@/store/useModalStore";
 
+import { unwrapActionResult } from "@/common/utils/action-result";
+import { isVariantInStock } from "@/common/utils/product";
+
 import styles from "./ProductActions.module.css";
 
 interface ProductActionsProps {
@@ -38,18 +41,18 @@ export const ProductActions = ({ product, discountPercentage }: ProductActionsPr
   const t = useTranslations("ProductDetail");
   const tErr = useTranslations("Errors");
   const [selectedSize, setSelectedSize] = useState<string | null>(
-    product.variants[0]?.size || null,
+    product.variants.find(isVariantInStock)?.size ?? null,
   );
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
   const openAuthModal = useModalStore((s) => s.openAuthModal);
   const user = useAuthStore((s) => s.user);
-  const { addItem, updateItemId, removeItem } = useCartStore();
+  const { addItem, updateItemId, setCart } = useCartStore();
   const { ids: favoriteIds, toggle: toggleFavoriteStore } = useFavoritesStore();
   const isFavorited = favoriteIds.includes(product.id);
 
-  const isOutOfStock = false;
+  const isOutOfStock = !product.variants.some(isVariantInStock);
 
   const handleAddToCart = async () => {
     if (!selectedSize) {
@@ -65,6 +68,8 @@ export const ProductActions = ({ product, discountPercentage }: ProductActionsPr
     setIsAddingToCart(true);
     const variant = product.variants.find((v) => v.size === selectedSize);
     const tempCartItemId = `temp-${Date.now()}`;
+    // addItem may merge into an existing row, so a failure has to restore the whole cart.
+    const previousItems = useCartStore.getState().items;
 
     addItem({
       id: tempCartItemId,
@@ -91,12 +96,15 @@ export const ProductActions = ({ product, discountPercentage }: ProductActionsPr
     });
 
     try {
-      const dbItem = await addToCartAction(product.id, variant?.id || null, 1);
+      const dbItem = unwrapActionResult(
+        await addToCartAction(product.id, variant?.id || null, 1),
+        tErr("addToCart"),
+      );
       updateItemId(tempCartItemId, dbItem.id);
       toast.success(t("added-to-cart"));
-    } catch {
-      removeItem(tempCartItemId);
-      toast.error(tErr("addToCart"));
+    } catch (error) {
+      setCart(previousItems);
+      toast.error(error instanceof Error ? error.message : tErr("addToCart"));
     } finally {
       setIsAddingToCart(false);
     }

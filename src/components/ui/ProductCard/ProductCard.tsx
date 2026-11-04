@@ -45,7 +45,7 @@ export const ProductCard = ({
   hideFavoriteButton = false,
 }: ProductCardProps) => {
   const name = getLocalizedField(product, "name", locale);
-  const primaryImage = product.images[0]?.url || "/placeholder.jpg";
+  const primaryImage = product.images[0]?.url || "/placeholder.webp";
   const isOutOfStock = product.variants.every((v) => v.stock === 0);
 
   const tErr = useTranslations("Errors");

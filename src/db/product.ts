@@ -3,21 +3,25 @@ import { prisma } from "@/libs/prisma";
 import { Prisma } from "@prisma/client";
 
 import { ITEMS_PER_PAGE } from "@/common/constants/pagination";
+import { compareSizes, sortVariantsBySize } from "@/common/utils/product";
 import type { ProductFormData } from "@/common/validation/product/product.schema";
 
 import { ProductFilters } from "@/types/product.types";
 
-function buildProductOrderBy(sortBy?: string): Record<string, "asc" | "desc"> {
+function buildProductOrderBy(sortBy?: string): Prisma.ProductOrderByWithRelationInput[] {
+  // The id tie-breaker keeps pagination stable when many products share a sort value.
+  const tieBreaker = { id: "asc" } as const;
+
   switch (sortBy) {
     case "price-asc":
-      return { price: "asc" };
+      return [{ price: "asc" }, tieBreaker];
     case "price-desc":
-      return { price: "desc" };
+      return [{ price: "desc" }, tieBreaker];
     case "popular":
-      return { isFeatured: "desc" };
+      return [{ isFeatured: "desc" }, { publishedAt: "desc" }, tieBreaker];
     case "newest":
     default:
-      return { publishedAt: "desc" };
+      return [{ publishedAt: "desc" }, tieBreaker];
   }
 }
 
@@ -63,13 +67,15 @@ export async function findProducts() {
       },
       variants: {
         select: { size: true, stock: true },
-        orderBy: { size: "asc" },
       },
     },
     orderBy: { createdAt: "desc" },
   });
 
-  return products;
+  return products.map((product) => ({
+    ...product,
+    variants: sortVariantsBySize(product.variants),
+  }));
 }
 
 export async function findCategories() {
@@ -112,13 +118,14 @@ export async function insertProduct(data: ProductFormData) {
 }
 
 export async function softDeleteProduct(id: string) {
-  const product = await prisma.product.findUnique({ where: { id }, select: { slug: true } });
-  if (product) invalidateProductCache(product.slug);
-
-  return prisma.product.update({
+  const product = await prisma.product.update({
     where: { id },
     data: { deletedAt: new Date() },
   });
+
+  invalidateProductCache(product.slug);
+
+  return product;
 }
 
 export async function findProductById(id: string) {
@@ -128,15 +135,13 @@ export async function findProductById(id: string) {
       images: {
         orderBy: { order: "asc" },
       },
-      variants: {
-        orderBy: { size: "asc" },
-      },
+      variants: true,
     },
   });
 
   if (!product) return null;
 
-  return product;
+  return { ...product, variants: sortVariantsBySize(product.variants) };
 }
 
 export async function updateProductInDb(id: string, data: ProductFormData) {
@@ -153,11 +158,6 @@ export async function updateProductInDb(id: string, data: ProductFormData) {
     throw new Error("Product not found");
   }
 
-  invalidateProductCache(currentProduct.slug);
-  if (productData.slug && productData.slug !== currentProduct.slug) {
-    invalidateProductCache(productData.slug);
-  }
-
   let publishedAt = currentProduct.publishedAt;
   if (productData.status === "PUBLISHED" && currentProduct.status !== "PUBLISHED") {
     publishedAt = new Date();
@@ -165,7 +165,7 @@ export async function updateProductInDb(id: string, data: ProductFormData) {
     publishedAt = null;
   }
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     await tx.product.update({
       where: { id },
       data: {
@@ -202,7 +202,12 @@ export async function updateProductInDb(id: string, data: ProductFormData) {
     }));
 
     const variantsToCreate: typeof incomingVariants = [];
-    const variantsToUpdate: { id: string; sku: string | null; stock: number }[] = [];
+    const variantsToUpdate: {
+      id: string;
+      colorEn: string | null;
+      sku: string | null;
+      stock: number;
+    }[] = [];
     const matchedVariantIds = new Set<string>();
 
     for (const incoming of incomingVariants) {
@@ -216,6 +221,7 @@ export async function updateProductInDb(id: string, data: ProductFormData) {
         matchedVariantIds.add(match.id);
         variantsToUpdate.push({
           id: match.id,
+          colorEn: incoming.colorEn,
           sku: incoming.sku,
           stock: incoming.stock,
         });
@@ -251,6 +257,7 @@ export async function updateProductInDb(id: string, data: ProductFormData) {
       await tx.productVariant.update({
         where: { id: update.id },
         data: {
+          colorEn: update.colorEn,
           sku: update.sku,
           stock: update.stock,
         },
@@ -259,6 +266,14 @@ export async function updateProductInDb(id: string, data: ProductFormData) {
 
     return { id };
   });
+
+  // Invalidate after commit so a concurrent read cannot re-cache the old data.
+  invalidateProductCache(currentProduct.slug);
+  if (productData.slug && productData.slug !== currentProduct.slug) {
+    invalidateProductCache(productData.slug);
+  }
+
+  return result;
 }
 
 export * from "@/types/product.types";
@@ -304,7 +319,7 @@ export async function findPublishedProducts(filters: ProductFilters = {}) {
   }
 
   if (sizes && sizes.length > 0) {
-    where.variants = { some: { size: { in: sizes } } };
+    where.variants = { some: { size: { in: sizes }, stock: { gt: 0 } } };
   }
 
   const orderBy = buildProductOrderBy(sortBy);
@@ -348,7 +363,7 @@ async function _findProductBySlug(slug: string) {
     where: { slug, deletedAt: null, status: "PUBLISHED" },
     include: {
       images: { orderBy: { order: "asc" } },
-      variants: { orderBy: [{ size: "asc" }, { colorUk: "asc" }] },
+      variants: { orderBy: { colorUk: "asc" } },
       category: {
         select: {
           nameUk: true,
@@ -367,7 +382,7 @@ async function _findProductBySlug(slug: string) {
 
   if (!product) return null;
 
-  return product;
+  return { ...product, variants: sortVariantsBySize(product.variants) };
 }
 
 export async function findSaleProducts(filters: Omit<ProductFilters, "categoryIds"> = {}) {
@@ -395,7 +410,7 @@ export async function findSaleProducts(filters: Omit<ProductFilters, "categoryId
   }
 
   if (sizes && sizes.length > 0) {
-    where.variants = { some: { size: { in: sizes } } };
+    where.variants = { some: { size: { in: sizes }, stock: { gt: 0 } } };
   }
 
   const orderBy = buildProductOrderBy(sortBy);
@@ -423,8 +438,10 @@ export async function findSaleProducts(filters: Omit<ProductFilters, "categoryId
 
 export async function findAvailableSizes(categoryIds?: string[]) {
   const variantWhere: {
+    stock: { gt: number };
     product: { deletedAt: null; status: "PUBLISHED"; categoryId?: { in: string[] } };
   } = {
+    stock: { gt: 0 },
     product: { deletedAt: null, status: "PUBLISHED" },
   };
 
@@ -436,10 +453,9 @@ export async function findAvailableSizes(categoryIds?: string[]) {
     where: variantWhere,
     select: { size: true },
     distinct: ["size"],
-    orderBy: { size: "asc" },
   });
 
-  return variants.map((v) => v.size);
+  return variants.map((v) => v.size).sort(compareSizes);
 }
 
 export async function searchProducts(
@@ -461,7 +477,7 @@ export async function searchProducts(
     prisma.product.findMany({
       where,
       select: productCardSelect,
-      orderBy: { publishedAt: "desc" },
+      orderBy: buildProductOrderBy("newest"),
       skip,
       take: limit,
     }),

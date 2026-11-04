@@ -1,8 +1,12 @@
 import { prisma } from "@/libs/prisma";
 
+import { DomainError } from "@/common/utils/action-result";
+
 import { CartItemWithProduct } from "@/types/cart.types";
 
 export * from "@/types/cart.types";
+
+export const MAX_CART_ITEM_QUANTITY = 99;
 
 async function getOrCreateCart(userId: string) {
   return prisma.cart.upsert({
@@ -17,6 +21,11 @@ export async function getCart(userId: string): Promise<CartItemWithProduct[]> {
     where: { userId },
     select: {
       items: {
+        // Hide rows that can no longer be bought: removed products and variants deleted by an admin.
+        where: {
+          product: { deletedAt: null, status: "PUBLISHED" },
+          OR: [{ variantId: { not: null } }, { product: { variants: { none: {} } } }],
+        },
         select: {
           id: true,
           quantity: true,
@@ -62,16 +71,36 @@ export async function addToCart(
   variantId?: string | null,
   quantity = 1,
 ) {
+  const product = await prisma.product.findFirst({
+    where: { id: productId, deletedAt: null, status: "PUBLISHED" },
+    select: { nameUk: true, nameEn: true, variants: { select: { id: true, stock: true } } },
+  });
+
+  if (!product) throw new DomainError("productNotFound");
+
+  const variant = product.variants.find((v) => v.id === variantId) ?? null;
+
+  if (product.variants.length > 0 && !variant) {
+    throw new DomainError("sizeRequired", { nameUk: product.nameUk, nameEn: product.nameEn });
+  }
+
   const cart = await getOrCreateCart(userId);
 
   const existing = await prisma.cartItem.findFirst({
-    where: { cartId: cart.id, productId, variantId: variantId ?? null },
+    where: { cartId: cart.id, productId, variantId: variant?.id ?? null },
   });
+
+  const newQuantity = (existing?.quantity ?? 0) + quantity;
+
+  if (newQuantity > MAX_CART_ITEM_QUANTITY) throw new DomainError("quantityLimit");
+  if (variant && newQuantity > variant.stock) {
+    throw new DomainError("stockLimit", { stock: variant.stock });
+  }
 
   if (existing) {
     return prisma.cartItem.update({
       where: { id: existing.id },
-      data: { quantity: existing.quantity + quantity },
+      data: { quantity: newQuantity },
     });
   }
 
@@ -79,7 +108,7 @@ export async function addToCart(
     data: {
       cartId: cart.id,
       productId,
-      variantId: variantId ?? null,
+      variantId: variant?.id ?? null,
       quantity,
     },
   });
@@ -88,7 +117,7 @@ export async function addToCart(
 export async function updateCartItemQuantity(userId: string, cartItemId: string, quantity: number) {
   const item = await prisma.cartItem.findUnique({
     where: { id: cartItemId },
-    include: { cart: true },
+    include: { cart: true, variant: { select: { stock: true } } },
   });
 
   if (!item || item.cart.userId !== userId) {
@@ -98,6 +127,12 @@ export async function updateCartItemQuantity(userId: string, cartItemId: string,
   if (quantity <= 0) {
     return prisma.cartItem.delete({ where: { id: cartItemId } });
   }
+
+  // Lowering the quantity stays allowed even if the stock has since dropped below it.
+  if (item.variant && quantity > item.quantity && quantity > item.variant.stock) {
+    throw new DomainError("stockLimit", { stock: item.variant.stock });
+  }
+
   return prisma.cartItem.update({
     where: { id: cartItemId },
     data: { quantity },

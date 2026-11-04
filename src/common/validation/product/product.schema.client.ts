@@ -22,6 +22,7 @@ export function useProductSchema() {
         productPriceRequired: t("validation.productPriceRequired"),
         productPricePositive: t("validation.productPricePositive"),
         productDiscountPricePositive: t("validation.productDiscountPricePositive"),
+        productDiscountPriceTooHigh: t("validation.productDiscountPriceTooHigh"),
         productCategoryRequired: t("validation.productCategoryRequired"),
       }),
     [t],

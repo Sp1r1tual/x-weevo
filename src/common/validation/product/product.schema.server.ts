@@ -19,6 +19,7 @@ export async function getProductSchema(locale: string) {
     productPriceRequired: t("validation.productPriceRequired"),
     productPricePositive: t("validation.productPricePositive"),
     productDiscountPricePositive: t("validation.productDiscountPricePositive"),
+    productDiscountPriceTooHigh: t("validation.productDiscountPriceTooHigh"),
     productCategoryRequired: t("validation.productCategoryRequired"),
   });
 }
