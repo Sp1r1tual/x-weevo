@@ -1,4 +1,3 @@
-import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { findProductBySlug } from "@/db/product";
@@ -64,7 +63,6 @@ export default async function ProductRoute({ params }: ProductRouteProps) {
 
   const name = getLocalizedField(product, "name", locale);
   const description = getProductDescription(product, locale);
-  const t = await getTranslations({ locale, namespace: "ProductDetail" });
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -84,23 +82,9 @@ export default async function ProductRoute({ params }: ProductRouteProps) {
     },
   };
 
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { name: t("home"), item: `${BASE_URL}/${locale}` },
-      {
-        name: getLocalizedField(product.category, "name", locale),
-        item: `${BASE_URL}/${locale}/${product.category.slug}`,
-      },
-      { name, item: `${BASE_URL}/${locale}/product/${product.slug}` },
-    ].map((entry, index) => ({ "@type": "ListItem", position: index + 1, ...entry })),
-  };
-
   return (
     <>
       <JsonLd data={jsonLd} />
-      <JsonLd data={breadcrumbJsonLd} />
       <ProductDetail product={product} locale={locale} />
     </>
   );

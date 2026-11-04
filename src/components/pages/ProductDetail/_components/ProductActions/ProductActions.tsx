@@ -53,8 +53,10 @@ export const ProductActions = ({ product }: ProductActionsProps) => {
   const locale = useLocale();
 
   const firstAvailableVariant = product.variants.find(isVariantInStock);
+  // A sold-out product still shows its colors and sizes, all unavailable.
+  const initialVariant = firstAvailableVariant ?? product.variants[0];
   const [selectedColor, setSelectedColor] = useState(
-    firstAvailableVariant ? getColorKey(firstAvailableVariant) : "",
+    initialVariant ? getColorKey(initialVariant) : "",
   );
   const [selectedSize, setSelectedSize] = useState<string | null>(
     firstAvailableVariant?.size ?? null,
