@@ -21,7 +21,7 @@ A highly visual, responsive interface that feels alive. We prioritize rich aesth
 Built with a global audience in mind. X-Weevo supports multiple languages seamlessly (English & Ukrainian out of the box), adapting the UI and content instantly to the user's preference without reloading the page.
 
 **Robust Authentication & Profiles**
-Secure and fast user registration via Google OAuth and Magic Links powered by Supabase. Users get access to a personalized dashboard, order history tracking, and favorite items list. Profile data is synced seamlessly across sessions.
+Secure sign-in via Google OAuth powered by Auth.js. Users get access to a personalized dashboard, order history tracking, and favorite items list. Profile data is synced seamlessly across sessions.
 
 **Lightning-Fast Data Fetching**
 Powered by Next.js Server Components and Server Actions, ensuring instant page loads, excellent SEO out of the box, and a zero-JS feel where possible.
@@ -43,7 +43,7 @@ A fully functional shopping cart, robust search capabilities, and detailed produ
 | **i18n**       | [next-intl](https://next-intl-docs.vercel.app/) – internationalization               |
 | **Animations** | [Framer Motion](https://www.framer.com/motion/) – dynamic, buttery-smooth animations |
 | **Forms**      | [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) validation |
-| **Styling**    | Vanilla CSS / CSS Modules with `clsx`                                                |
+| **Styling**    | Vanilla CSS / CSS Modules                                                            |
 | **Language**   | TypeScript 5                                                                         |
 
 ### Server, Database & API
@@ -92,24 +92,28 @@ Copy the example `.env` file to set up your environment variables:
 cp .env.example .env
 ```
 
-Open `.env` and fill in your Supabase credentials:
+Open `.env` and fill in the values:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `AUTH_SECRET` (generate with `npx auth secret`)
+- `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` (Google OAuth credentials)
 - `DATABASE_URL` (Connection pooler URL for runtime queries - usually port 6543)
 - `DIRECT_URL` (Direct connection for Prisma migrations - usually port 5432)
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SECRET_KEY` (server-only, used for admin image uploads)
+- `NEXT_PUBLIC_SITE_URL`
+
+The database must be reachable during `yarn build`, because the sitemap is generated from it.
 
 ### 3. Database Setup
 
-Apply the database schema to your Supabase PostgreSQL instance and generate the Prisma Client:
+Apply the migrations and seed the base categories:
 
 ```bash
-# Push schema to database
 yarn prisma:migrate
-
-# Generate Prisma types
-yarn prisma:generate
+yarn prisma:seed
 ```
+
+To access the admin panel at `/admin`, sign in once and then set your user's `role` to `ADMIN` in Prisma Studio.
 
 _Optional: Open Prisma Studio to view and edit your database via UI:_
 
@@ -141,6 +145,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `yarn knip`            | Detect unused code, files, and dependencies |
 | `yarn prisma:migrate`  | Run Prisma migrations to update DB schema   |
 | `yarn prisma:generate` | Generate the Prisma client for type safety  |
+| `yarn prisma:seed`     | Seed the base categories                    |
 | `yarn prisma:studio`   | Open Prisma Studio database UI              |
 
 ---
