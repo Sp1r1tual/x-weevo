@@ -9,6 +9,9 @@ import { UserRole } from "@prisma/client";
 export const { handlers, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
 
+  // Without this, sign-in fails with UntrustedHost anywhere but Vercel, including `next start`.
+  trustHost: true,
+
   providers: [Google, Apple],
 
   session: {

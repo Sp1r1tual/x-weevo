@@ -22,10 +22,13 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    // React's dev build needs eval for debugging; production does not.
+    const scriptEval = process.env.NODE_ENV === "development" ? "'unsafe-eval'" : "";
+
     const cspHeader = `
       default-src 'self';
       connect-src 'self' https://vzzjcgycihmvgklaahyv.supabase.co;
-      script-src 'self' 'unsafe-eval' 'unsafe-inline';
+      script-src 'self' ${scriptEval} 'unsafe-inline';
       style-src 'self' 'unsafe-inline';
       img-src 'self' blob: data: https://lh3.googleusercontent.com https://images.unsplash.com https://vzzjcgycihmvgklaahyv.supabase.co;
       font-src 'self';
