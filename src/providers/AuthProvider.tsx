@@ -53,6 +53,9 @@ export const AuthProvider = ({
   const prevStatus = useRef(status);
 
   useState(() => {
+    // These stores are module singletons: on the server they would be shared between requests.
+    if (typeof window === "undefined") return;
+
     useAuthStore.setState({ user: initialUser, isLoading: false });
     useCartStore.setState({ items: initialCart });
     useFavoritesStore.setState({ ids: initialFavorites });

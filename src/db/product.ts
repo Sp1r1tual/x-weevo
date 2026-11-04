@@ -462,12 +462,15 @@ export async function searchProducts(
   query: string,
   { page = 1, limit = ITEMS_PER_PAGE }: { page?: number; limit?: number } = {},
 ) {
+  // Postgres rejects NUL bytes in text, and an empty query should not list the whole catalog.
+  const normalizedQuery = query.replaceAll("\0", "").trim();
+
   const where: Prisma.ProductWhereInput = {
     deletedAt: null,
     status: "PUBLISHED",
     OR: [
-      { nameUk: { contains: query, mode: "insensitive" } },
-      { nameEn: { contains: query, mode: "insensitive" } },
+      { nameUk: { contains: normalizedQuery, mode: "insensitive" } },
+      { nameEn: { contains: normalizedQuery, mode: "insensitive" } },
     ],
   };
 
@@ -475,13 +478,13 @@ export async function searchProducts(
 
   const [products, totalCount] = await Promise.all([
     prisma.product.findMany({
-      where,
+      where: normalizedQuery ? where : { id: { in: [] } },
       select: productCardSelect,
       orderBy: buildProductOrderBy("newest"),
       skip,
       take: limit,
     }),
-    prisma.product.count({ where }),
+    normalizedQuery ? prisma.product.count({ where }) : 0,
   ]);
 
   return {

@@ -22,7 +22,7 @@ import { CartSummary } from "./_components/CartSummary/CartSummary";
 import { CartSummarySkeleton } from "./_components/CartSummarySkeleton/CartSummarySkeleton";
 
 import { useAuthStore } from "@/store/useAuthStore";
-import { useCartStore } from "@/store/useCartStore";
+import { selectCartCount, useCartStore } from "@/store/useCartStore";
 import { useModalStore } from "@/store/useModalStore";
 
 import { unwrapActionResult } from "@/common/utils/action-result";
@@ -40,11 +40,11 @@ export const CartPage = ({ locale }: CartPageProps) => {
   const user = useAuthStore((s) => s.user);
   const isAuthLoading = useAuthStore((s) => s.isLoading);
   const openAuthModal = useModalStore((s) => s.openAuthModal);
-  const { items, clear, getTotalCount, isLoading: isCartLoading } = useCartStore();
+  const { items, clear, isLoading: isCartLoading } = useCartStore();
   const [isClearOpen, setIsClearOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
 
-  const totalCount = getTotalCount();
+  const totalCount = useCartStore(selectCartCount);
 
   const isLoading = isAuthLoading || isCartLoading;
 

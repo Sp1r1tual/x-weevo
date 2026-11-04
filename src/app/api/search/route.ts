@@ -8,7 +8,7 @@ import { getLocalizedField } from "@/common/utils/locale";
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request.headers);
   try {
-    await limiter.check(60, `search:${ip}`);
+    await limiter.check(300, `search:${ip}`);
   } catch {
     return NextResponse.json({ products: [] }, { status: 429 });
   }

@@ -13,7 +13,7 @@ import { Logo } from "@/components/ui/Logo/Logo";
 import { SearchInput } from "@/components/ui/SearchInput/SearchInput";
 
 import { useAuthStore } from "@/store/useAuthStore";
-import { useCartStore } from "@/store/useCartStore";
+import { selectCartCount, useCartStore } from "@/store/useCartStore";
 import { useFavoritesStore } from "@/store/useFavoritesStore";
 import { useModalStore } from "@/store/useModalStore";
 
@@ -29,7 +29,7 @@ export const Navbar = () => {
 
   const user = useAuthStore((s) => s.user);
 
-  const cartCount = useCartStore((s) => s.getTotalCount());
+  const cartCount = useCartStore(selectCartCount);
   const favCount = useFavoritesStore((s) => s.getCount());
 
   const isNavbarHidden = useScrollDirection();

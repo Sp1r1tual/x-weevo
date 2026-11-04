@@ -6,7 +6,7 @@ import { ShoppingBag } from "lucide-react";
 
 import { Button } from "@/components/ui/Button/Button";
 
-import { useCartStore } from "@/store/useCartStore";
+import { selectCartTotal, useCartStore } from "@/store/useCartStore";
 
 import { formatPrice } from "@/common/utils/format";
 
@@ -21,10 +21,9 @@ export const CartSummary = ({ onCheckout, isCheckingOut }: CartSummaryProps) => 
   const t = useTranslations("Cart");
   const locale = useLocale();
   const items = useCartStore((s) => s.items);
-  const getTotalPrice = useCartStore((s) => s.getTotalPrice);
+  const total = useCartStore(selectCartTotal);
 
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const total = getTotalPrice();
   const discount = subtotal - total;
 
   const fmt = (n: number) => formatPrice(n, locale);
